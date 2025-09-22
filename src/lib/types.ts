@@ -1,4 +1,4 @@
-import type { User, Food, FoodRecord, UserGoal } from "@/generated/prisma"
+import type { User, Food, FoodRecord, UserGoal } from "@prisma/client"
 
 export type { User, Food, FoodRecord, UserGoal }
 
