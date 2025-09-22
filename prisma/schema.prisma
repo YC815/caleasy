@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+
+  foods     Food[]
+  records   FoodRecord[]
+  goals     UserGoal[]
+}
+
+model Food {
+  id          String @id @default(cuid())
+  name        String
+  category    String
+  caloriesPer100g Int
+  proteinPer100g  Float
+  carbsPer100g    Float
+  fatPer100g      Float
+
+  userId      String
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  records     FoodRecord[]
+
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, name])
+}
+
+model FoodRecord {
+  id        String   @id @default(cuid())
+  amount    Int      // in grams
+  mealType  String   // breakfast, lunch, dinner, snack
+  recordedAt DateTime @default(now())
+
+  userId    String
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  foodId    String
+  food      Food @relation(fields: [foodId], references: [id], onDelete: Cascade)
+}
+
+model UserGoal {
+  id              String @id @default(cuid())
+  dailyCalories   Int
+  proteinRatio    Float  // 0-1
+  carbsRatio      Float  // 0-1
+  fatRatio        Float  // 0-1
+
+  userId          String @unique
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime @default(now())
+}
