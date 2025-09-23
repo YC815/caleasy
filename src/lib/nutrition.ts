@@ -13,25 +13,46 @@ export function calculateNutrition(records: NutritionRecord[] | NutritionRecordW
 }
 
 export function calculateMacroRatios(nutrition: NutritionSummary): MacroRatio[] {
-  const total = nutrition.calories || 1
+  const carbCalories = nutrition.carbs * 4
+  const proteinCalories = nutrition.protein * 4
+  const fatCalories = nutrition.fat * 9
+  const totalMacroCalories = carbCalories + proteinCalories + fatCalories || 1
+
+  const carbPercent = (carbCalories / totalMacroCalories) * 100
+  const proteinPercent = (proteinCalories / totalMacroCalories) * 100
+  const fatPercent = (fatCalories / totalMacroCalories) * 100
+
+  // 使用最大餘數法確保總和為100%
+  const percentages = [carbPercent, proteinPercent, fatPercent]
+  const roundedPercentages = percentages.map(p => Math.floor(p))
+  const remainders = percentages.map((p, i) => ({ index: i, remainder: p - roundedPercentages[i] }))
+
+  // 按餘數大小排序，將剩餘百分比分配給餘數最大的項目
+  remainders.sort((a, b) => b.remainder - a.remainder)
+  const totalRounded = roundedPercentages.reduce((sum, p) => sum + p, 0)
+  const remainingPercent = 100 - totalRounded
+
+  for (let i = 0; i < remainingPercent; i++) {
+    roundedPercentages[remainders[i].index]++
+  }
 
   return [
     {
       name: "碳水化合物",
-      value: Math.round((nutrition.carbs * 4 / total) * 100),
-      calories: Math.round(nutrition.carbs * 4),
+      value: roundedPercentages[0],
+      calories: Math.round(carbCalories),
       color: "#3b82f6"
     },
     {
       name: "蛋白質",
-      value: Math.round((nutrition.protein * 4 / total) * 100),
-      calories: Math.round(nutrition.protein * 4),
+      value: roundedPercentages[1],
+      calories: Math.round(proteinCalories),
       color: "#1e40af"
     },
     {
       name: "脂肪",
-      value: Math.round((nutrition.fat * 9 / total) * 100),
-      calories: Math.round(nutrition.fat * 9),
+      value: roundedPercentages[2],
+      calories: Math.round(fatCalories),
       color: "#60a5fa"
     }
   ]
