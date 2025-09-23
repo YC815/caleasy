@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
+import { useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -9,15 +8,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-// import { ScrollArea } from "@/components/ui/scroll-area"
-import { Search, Plus } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
 import { createFoodBasedRecord } from "@/actions/record-actions"
-import { getFoodsByCategory, searchGlobalFoods, createFoodFromGlobal } from "@/actions/food-actions"
-import type { Food, FoodCategory } from "@/lib/types"
-import type { GlobalFood } from "@prisma/client"
+import { useFoodSearch } from "@/hooks/use-food-search"
+import { FoodSearchInput } from "@/components/food-search-input"
+import { FoodList } from "@/components/food-list"
+import { FoodAmountForm } from "@/components/food-amount-form"
+import type { FoodCategory, UnifiedFood } from "@/lib/types"
 
 type AddFoodDialogProps = {
   category: FoodCategory
@@ -29,69 +26,32 @@ type AddFoodDialogProps = {
 export function AddFoodDialog({ category, isOpen, onClose, onSuccess }: AddFoodDialogProps) {
   const { user } = useUser()
   const [isLoading, setIsLoading] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedFood, setSelectedFood] = useState<Food | null>(null)
-  const [amount, setAmount] = useState("")
-  const [userFoods, setUserFoods] = useState<Food[]>([])
-  const [globalFoods, setGlobalFoods] = useState<GlobalFood[]>([])
+  const [selectedFood, setSelectedFood] = useState<UnifiedFood | null>(null)
 
-  useEffect(() => {
-    if (isOpen && user?.id) {
-      loadUserFoods()
-    }
-  }, [isOpen, user?.id, category]) // eslint-disable-line react-hooks/exhaustive-deps
+  // 使用統一的搜尋 hook - 消除複雜邏輯
+  const { searchQuery, setSearchQuery, result, addGlobalFood } = useFoodSearch(user?.id, category)
 
-  useEffect(() => {
-    if (searchQuery.length >= 2) {
-      searchGlobalFoodsData()
+  // 處理食物選擇 - 統一邏輯
+  const handleFoodSelect = async (food: UnifiedFood) => {
+    if (food.isGlobal) {
+      const userFood = await addGlobalFood(food)
+      if (userFood) {
+        setSelectedFood(userFood)
+      }
     } else {
-      setGlobalFoods([])
-    }
-  }, [searchQuery]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const loadUserFoods = async () => {
-    if (!user?.id) return
-    try {
-      const foods = await getFoodsByCategory(user.id, category)
-      setUserFoods(foods)
-    } catch (error) {
-      console.error("Failed to load user foods:", error)
+      setSelectedFood(food)
     }
   }
 
-  const searchGlobalFoodsData = async () => {
-    try {
-      const foods = await searchGlobalFoods(searchQuery)
-      setGlobalFoods(foods.filter(f => f.category === category))
-    } catch (error) {
-      console.error("Failed to search global foods:", error)
-    }
-  }
-
-  const handleFoodSelect = (food: Food) => {
-    setSelectedFood(food)
-  }
-
-  const handleGlobalFoodSelect = async (globalFood: GlobalFood) => {
-    if (!user?.id) return
-    try {
-      const createdFood = await createFoodFromGlobal(globalFood.id, user.id)
-      setSelectedFood(createdFood)
-      loadUserFoods() // 重新載入使用者食物列表
-    } catch (error) {
-      console.error("Failed to add global food:", error)
-    }
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user?.id || !selectedFood || !amount) return
+  // 提交記錄 - 簡化邏輯
+  const handleSubmit = async (amount: number) => {
+    if (!user?.id || !selectedFood) return
 
     setIsLoading(true)
     try {
       await createFoodBasedRecord(user.id, {
         foodId: selectedFood.id,
-        amount: parseInt(amount)
+        amount
       })
 
       handleClose()
@@ -103,15 +63,15 @@ export function AddFoodDialog({ category, isOpen, onClose, onSuccess }: AddFoodD
     }
   }
 
+  // 清理狀態
   const handleClose = () => {
     setSelectedFood(null)
-    setAmount("")
     setSearchQuery("")
-    setGlobalFoods([])
     onClose()
   }
 
-  const displayFoods = searchQuery.length >= 2 ? globalFoods : userFoods
+  // 決定顯示的食物清單
+  const displayFoods = searchQuery.length >= 2 ? result.globalFoods : result.userFoods
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -125,93 +85,39 @@ export function AddFoodDialog({ category, isOpen, onClose, onSuccess }: AddFoodD
 
         {!selectedFood ? (
           <div className="flex-1 flex flex-col gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="搜尋食物..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+            <FoodSearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+            />
 
             <div className="flex-1 max-h-80 overflow-y-auto">
-              <div className="space-y-2">
-                {displayFoods.length === 0 ? (
-                  <div className="text-center text-muted-foreground py-8">
-                    {searchQuery.length >= 2 ? "找不到相關食物" : `沒有 ${category} 類食物`}
-                  </div>
-                ) : (
-                  displayFoods.map((food) => (
-                    <Button
-                      key={food.id}
-                      variant="outline"
-                      className="w-full justify-between h-auto p-3"
-                      onClick={() => {
-                        if ("userId" in food) {
-                          handleFoodSelect(food as Food)
-                        } else {
-                          handleGlobalFoodSelect(food as GlobalFood)
-                        }
-                      }}
-                    >
-                      <div className="text-left">
-                        <div className="font-medium">{food.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {food.caloriesPer100g} 大卡/100g
-                        </div>
-                      </div>
-                      {"userId" in food ? null : <Plus className="h-4 w-4" />}
-                    </Button>
-                  ))
-                )}
-              </div>
+              {result.error && (
+                <div className="text-center text-destructive py-4">
+                  {result.error}
+                </div>
+              )}
+
+              {result.isLoading ? (
+                <div className="text-center text-muted-foreground py-8">
+                  搜尋中...
+                </div>
+              ) : (
+                <FoodList
+                  foods={displayFoods}
+                  searchQuery={searchQuery}
+                  categoryName={category}
+                  onFoodSelect={handleFoodSelect}
+                />
+              )}
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="flex-1 flex flex-col gap-4">
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <div className="font-medium">{selectedFood.name}</div>
-              <div className="text-sm text-muted-foreground">
-                {selectedFood.caloriesPer100g} 大卡/100g
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="amount">份量（克）</Label>
-              <Input
-                id="amount"
-                type="number"
-                placeholder="100"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                required
-                min="1"
-              />
-            </div>
-
-            {amount && (
-              <div className="bg-primary/10 p-3 rounded-lg">
-                <div className="text-sm">
-                  總熱量：{Math.round((selectedFood.caloriesPer100g * parseInt(amount || "0")) / 100)} 大卡
-                </div>
-              </div>
-            )}
-
-            <div className="flex gap-3 mt-auto">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={() => setSelectedFood(null)}
-              >
-                返回
-              </Button>
-              <Button type="submit" className="flex-1" disabled={isLoading || !amount}>
-                {isLoading ? "記錄中..." : "記錄"}
-              </Button>
-            </div>
-          </form>
+          <FoodAmountForm
+            selectedFood={selectedFood}
+            onSubmit={handleSubmit}
+            onBack={() => setSelectedFood(null)}
+            isLoading={isLoading}
+          />
         )}
       </DialogContent>
     </Dialog>

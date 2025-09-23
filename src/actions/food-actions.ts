@@ -362,3 +362,80 @@ export async function createFoodFromGlobal(globalFoodId: string, userId: string)
     throw error
   }
 }
+
+// 統一的食物搜尋函數 - 消除分散的邏輯
+export async function searchFoodsUnified(
+  userId: string,
+  category: string,
+  query?: string
+): Promise<FoodSearchResult> {
+  console.log("[SEARCH_FOODS_UNIFIED] 開始統一搜尋:", {
+    userId,
+    category,
+    query,
+    timestamp: new Date().toISOString()
+  })
+
+  try {
+    const [userFoods, globalFoods] = await Promise.all([
+      // 搜尋用戶食物
+      db.food.findMany({
+        where: {
+          userId,
+          category,
+          ...(query && {
+            name: {
+              contains: query,
+              mode: "insensitive" as const
+            }
+          })
+        },
+        orderBy: { name: "asc" }
+      }),
+      // 搜尋全域食物（只在有查詢字串時）
+      query && query.length >= 2 ? db.globalFood.findMany({
+        where: {
+          category,
+          name: {
+            contains: query,
+            mode: "insensitive" as const
+          },
+          isPublished: true
+        },
+        orderBy: { name: "asc" },
+        take: 20
+      }) : []
+    ])
+
+    const result: FoodSearchResult = {
+      userFoods: userFoods.map(foodToUnified),
+      globalFoods: (globalFoods || []).map(globalFoodToUnified),
+      isLoading: false,
+      error: null
+    }
+
+    console.log("[SEARCH_FOODS_UNIFIED] 搜尋成功:", {
+      userFoodsCount: result.userFoods.length,
+      globalFoodsCount: result.globalFoods.length,
+      timestamp: new Date().toISOString()
+    })
+
+    return result
+  } catch (error) {
+    console.error("[SEARCH_FOODS_UNIFIED] 搜尋失敗:", {
+      userId,
+      category,
+      query,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    })
+
+    return {
+      userFoods: [],
+      globalFoods: [],
+      isLoading: false,
+      error: error instanceof Error ? error.message : "搜尋失敗"
+    }
+  }
+}
