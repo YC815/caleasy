@@ -1,17 +1,13 @@
-import type { FoodRecordWithFood, NutritionSummary, MacroRatio } from "./types"
+import type { NutritionRecord, NutritionRecordWithFood, NutritionSummary, MacroRatio } from "./types"
 
-export function calculateNutrition(records: FoodRecordWithFood[]): NutritionSummary {
+export function calculateNutrition(records: NutritionRecord[] | NutritionRecordWithFood[]): NutritionSummary {
   return records.reduce(
-    (total, record) => {
-      const factor = record.amount / 100
-
-      return {
-        calories: total.calories + (record.food.caloriesPer100g * factor),
-        protein: total.protein + (record.food.proteinPer100g * factor),
-        carbs: total.carbs + (record.food.carbsPer100g * factor),
-        fat: total.fat + (record.food.fatPer100g * factor)
-      }
-    },
+    (total, record) => ({
+      calories: total.calories + record.calories,
+      protein: total.protein + record.protein,
+      carbs: total.carbs + record.carbs,
+      fat: total.fat + record.fat
+    }),
     { calories: 0, protein: 0, carbs: 0, fat: 0 }
   )
 }

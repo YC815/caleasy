@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { NutritionChart } from "@/components/nutrition-chart"
-import { FoodList } from "@/components/food-list"
-import { AddFoodDialog } from "@/components/add-food-dialog"
+import { NutritionList } from "@/components/nutrition-list"
+import { AddRecordDialog } from "@/components/add-record-dialog"
 import { WeeklyChart } from "@/components/weekly-chart"
 import { WeeklySummary } from "@/components/weekly-summary"
 import { Button } from "@/components/ui/button"
@@ -11,10 +11,10 @@ import { PieChartSkeleton, LineChartSkeleton } from "@/components/skeletons/char
 import { FoodListSkeleton } from "@/components/skeletons/food-list-skeleton"
 import { UserButton } from "@clerk/nextjs"
 import { BarChart3, History, Calendar } from "lucide-react"
-import { getFoodRecordsByDate, getRecentFoodRecords } from "@/actions/record-actions"
+import { getNutritionRecordsByDate, getRecentNutritionRecords } from "@/actions/record-actions"
 import { getOrCreateWeeklyStats, getDailyCaloriesForWeek } from "@/actions/weekly-stats-actions"
 import { calculateNutrition, calculateMacroRatios } from "@/lib/nutrition"
-import type { FoodRecordWithFood, MacroRatio, WeeklyStats } from "@/lib/types"
+import type { NutritionRecordWithFood, MacroRatio, WeeklyStats } from "@/lib/types"
 
 type ViewMode = "overview" | "history"
 type TimeFrame = "daily" | "weekly"
@@ -28,7 +28,7 @@ export function DashboardView({ userId }: DashboardViewProps) {
   const [timeFrame, setTimeFrame] = useState<TimeFrame>("daily")
   const [isLoading, setIsLoading] = useState(true)
 
-  const [historyRecords, setHistoryRecords] = useState<FoodRecordWithFood[]>([])
+  const [historyRecords, setHistoryRecords] = useState<NutritionRecordWithFood[]>([])
   const [macros, setMacros] = useState<MacroRatio[]>([])
   const [weeklyStats, setWeeklyStats] = useState<WeeklyStats | null>(null)
   const [weeklyChart, setWeeklyChart] = useState<{ date: string; calories: number }[]>([])
@@ -42,7 +42,7 @@ export function DashboardView({ userId }: DashboardViewProps) {
       const yesterday = new Date(today)
       yesterday.setDate(yesterday.getDate() - 1)
 
-      const todayRecs = await getFoodRecordsByDate(userId, today)
+      const todayRecs = await getNutritionRecordsByDate(userId, today)
 
       const todayNut = calculateNutrition(todayRecs)
       const macroData = calculateMacroRatios(todayNut)
@@ -75,7 +75,7 @@ export function DashboardView({ userId }: DashboardViewProps) {
 
   const loadHistoryData = async () => {
     try {
-      const records = await getRecentFoodRecords(userId, 50)
+      const records = await getRecentNutritionRecords(userId, 50)
       setHistoryRecords(records)
     } catch (error) {
       console.error("Error loading history data:", error)
@@ -182,7 +182,7 @@ export function DashboardView({ userId }: DashboardViewProps) {
           )}
         </div>
 
-        <AddFoodDialog onSuccess={handleAddFoodSuccess} />
+        <AddRecordDialog onSuccess={handleAddFoodSuccess} />
       </div>
     )
   }
@@ -276,11 +276,11 @@ export function DashboardView({ userId }: DashboardViewProps) {
         )}
 
         {viewMode === "history" && (
-          <FoodList records={historyRecords} showGroupedByDate={true} />
+          <NutritionList records={historyRecords} showGroupedByDate={true} />
         )}
       </div>
 
-      <AddFoodDialog onSuccess={handleAddFoodSuccess} />
+      <AddRecordDialog onSuccess={handleAddFoodSuccess} />
     </div>
   )
 }

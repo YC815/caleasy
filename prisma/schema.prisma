@@ -14,7 +14,7 @@ model User {
   createdAt DateTime @default(now())
 
   foods       Food[]
-  records     FoodRecord[]
+  records     NutritionRecord[]
   goals       UserGoal[]
   weeklyStats WeeklyStats[]
 }
@@ -30,23 +30,33 @@ model Food {
 
   userId      String
   user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  records     FoodRecord[]
+  records     NutritionRecord[]
 
   createdAt   DateTime @default(now())
 
   @@unique([userId, name])
 }
 
-model FoodRecord {
-  id        String   @id @default(cuid())
-  amount    Int      // in grams
-  recordedAt DateTime @default(now())
+model NutritionRecord {
+  id          String   @id @default(cuid())
+  name        String?  // 食物名稱（直接輸入時使用）
+  category    String   // "蛋白質", "蔬果與纖維", "碳水化合物", "其他"
 
-  userId    String
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // 營養素數值（直接儲存或從Food計算而來）
+  calories    Float
+  protein     Float    // in grams
+  carbs       Float    // in grams
+  fat         Float    // in grams
 
-  foodId    String
-  food      Food @relation(fields: [foodId], references: [id], onDelete: Cascade)
+  // 傳統食物記錄欄位（可選）
+  foodId      String?  // 可選，關聯到 Food
+  amount      Int?     // 克數，僅在有 foodId 時使用
+
+  recordedAt  DateTime @default(now())
+
+  userId      String
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  food        Food? @relation(fields: [foodId], references: [id], onDelete: SetNull)
 }
 
 model UserGoal {

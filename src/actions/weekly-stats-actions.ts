@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
-import { getFoodRecordsByDateRange } from "./record-actions"
+import { getNutritionRecordsByDateRange } from "./record-actions"
 import { calculateNutrition } from "@/lib/nutrition"
 import type { WeeklyStats } from "@/lib/types"
 
@@ -26,7 +26,7 @@ export async function calculateWeeklyStats(userId: string, date: Date = new Date
   const weekStart = getWeekStartDate(date)
   const weekEnd = getWeekEndDate(weekStart)
 
-  const records = await getFoodRecordsByDateRange(userId, weekStart, weekEnd)
+  const records = await getNutritionRecordsByDateRange(userId, weekStart, weekEnd)
 
   if (records.length === 0) {
     return {
@@ -180,7 +180,7 @@ export async function getDailyCaloriesForWeek(userId: string, date: Date = new D
     const dayEnd = new Date(currentDate)
     dayEnd.setHours(23, 59, 59, 999)
 
-    const dayRecords = await getFoodRecordsByDateRange(userId, dayStart, dayEnd)
+    const dayRecords = await getNutritionRecordsByDateRange(userId, dayStart, dayEnd)
     const dayNutrition = calculateNutrition(dayRecords)
 
     dailyData.push({
