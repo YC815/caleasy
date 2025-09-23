@@ -63,9 +63,10 @@ export function AddRecordDialog({ onSuccess }: AddRecordDialogProps) {
         <DialogTrigger asChild>
           <Button
             size="lg"
-            className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50"
+            className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 h-12 px-6 rounded-full shadow-lg"
           >
-            <Plus className="h-6 w-6" />
+            <Plus className="h-5 w-5 mr-2" />
+            新增紀錄
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-md">
