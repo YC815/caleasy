@@ -19,7 +19,7 @@ type WeeklyChartProps = {
 const chartConfig = {
   calories: {
     label: "熱量",
-    color: "hsl(var(--primary))",
+    color: "var(--chart-1)",
   },
 } satisfies ChartConfig
 
@@ -107,6 +107,7 @@ export function WeeklyChart({ thisWeekData, lastWeekData }: WeeklyChartProps) {
               type="monotone"
               stroke="var(--color-calories)"
               strokeWidth={2}
+              connectNulls={false}
               dot={{
                 fill: "var(--color-calories)",
                 strokeWidth: 2,
