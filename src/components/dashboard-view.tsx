@@ -36,19 +36,49 @@ export function DashboardView({ userId }: DashboardViewProps) {
 
 
   const loadDailyData = async () => {
+    console.log("[DASHBOARD_DAILY] 開始載入每日資料:", {
+      userId,
+      timestamp: new Date().toISOString()
+    })
+
     try {
       const today = new Date()
       const yesterday = new Date(today)
       yesterday.setDate(yesterday.getDate() - 1)
 
+      console.log("[DASHBOARD_DAILY] 獲取今日營養記錄:", {
+        userId,
+        today: today.toISOString(),
+        timestamp: new Date().toISOString()
+      })
+
       const todayRecs = await getNutritionRecordsByDate(userId, today)
+
+      console.log("[DASHBOARD_DAILY] 今日記錄獲取結果:", {
+        recordsCount: todayRecs?.length || 0,
+        recordIds: todayRecs?.map(r => r.id) || [],
+        timestamp: new Date().toISOString()
+      })
 
       const todayNut = calculateNutrition(todayRecs || [])
       const macroData = calculateMacroRatios(todayNut)
 
+      console.log("[DASHBOARD_DAILY] 營養計算完成:", {
+        nutrition: todayNut,
+        macrosCount: macroData.length,
+        timestamp: new Date().toISOString()
+      })
+
       setMacros(macroData)
+
+      console.log("[DASHBOARD_DAILY] 每日資料載入成功")
     } catch (error) {
-      console.error("Error loading daily data:", error)
+      console.error("[DASHBOARD_DAILY] 每日資料載入失敗:", {
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      })
       // 設定預設的空狀態
       setMacros([
         { name: "碳水化合物", value: 0, calories: 0, color: "#3b82f6" },
@@ -59,10 +89,22 @@ export function DashboardView({ userId }: DashboardViewProps) {
   }
 
   const loadWeeklyData = async () => {
+    console.log("[DASHBOARD_WEEKLY] 開始載入週資料:", {
+      userId,
+      timestamp: new Date().toISOString()
+    })
+
     try {
       const now = new Date()
       const lastWeek = new Date(now)
       lastWeek.setDate(lastWeek.getDate() - 7)
+
+      console.log("[DASHBOARD_WEEKLY] 準備並行獲取週資料:", {
+        userId,
+        thisWeek: now.toISOString(),
+        lastWeek: lastWeek.toISOString(),
+        timestamp: new Date().toISOString()
+      })
 
       const [stats, thisWeekData, lastWeekData] = await Promise.all([
         getOrCreateWeeklyStats(userId),
@@ -70,33 +112,95 @@ export function DashboardView({ userId }: DashboardViewProps) {
         getDailyCaloriesForWeek(userId, lastWeek)
       ])
 
+      console.log("[DASHBOARD_WEEKLY] 週資料獲取完成:", {
+        statsId: stats?.id,
+        totalCalories: stats?.totalCalories,
+        thisWeekDataPoints: thisWeekData?.length,
+        lastWeekDataPoints: lastWeekData?.length,
+        thisWeekTotal: thisWeekData?.reduce((sum, d) => sum + d.calories, 0),
+        lastWeekTotal: lastWeekData?.reduce((sum, d) => sum + d.calories, 0),
+        timestamp: new Date().toISOString()
+      })
+
       setWeeklyStats(stats)
       setWeeklyChart(thisWeekData)
       setLastWeekChart(lastWeekData)
+
+      console.log("[DASHBOARD_WEEKLY] 週資料載入成功")
     } catch (error) {
-      console.error("Error loading weekly data:", error)
+      console.error("[DASHBOARD_WEEKLY] 週資料載入失敗:", {
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      })
     }
   }
 
   const loadHistoryData = async () => {
+    console.log("[DASHBOARD_HISTORY] 開始載入歷史資料:", {
+      userId,
+      timestamp: new Date().toISOString()
+    })
+
     try {
       const records = await getRecentNutritionRecords(userId, 50)
+
+      console.log("[DASHBOARD_HISTORY] 歷史資料獲取完成:", {
+        recordsCount: records?.length || 0,
+        totalCalories: records?.reduce((sum, r) => sum + (r.calories || 0), 0) || 0,
+        dateRange: {
+          latest: records?.length > 0 ? records[0].recordedAt?.toISOString() : null,
+          earliest: records?.length > 0 ? records[records.length - 1].recordedAt?.toISOString() : null
+        },
+        timestamp: new Date().toISOString()
+      })
+
       setHistoryRecords(records)
+
+      console.log("[DASHBOARD_HISTORY] 歷史資料載入成功")
     } catch (error) {
-      console.error("Error loading history data:", error)
+      console.error("[DASHBOARD_HISTORY] 歷史資料載入失敗:", {
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      })
     }
   }
 
   const loadData = async () => {
+    console.log("[DASHBOARD_LOAD] 開始載入主要資料:", {
+      userId,
+      timeFrame,
+      timestamp: new Date().toISOString()
+    })
+
     setIsLoading(true)
     try {
       if (timeFrame === "daily") {
+        console.log("[DASHBOARD_LOAD] 載入每日模式資料")
         await loadDailyData()
       } else {
+        console.log("[DASHBOARD_LOAD] 載入週模式資料")
         await loadWeeklyData()
       }
+
+      console.log("[DASHBOARD_LOAD] 主要資料載入成功:", {
+        timeFrame,
+        timestamp: new Date().toISOString()
+      })
+    } catch (error) {
+      console.error("[DASHBOARD_LOAD] 主要資料載入失敗:", {
+        userId,
+        timeFrame,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      })
     } finally {
       setIsLoading(false)
+      console.log("[DASHBOARD_LOAD] 載入狀態結束")
     }
   }
 

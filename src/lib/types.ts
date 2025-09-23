@@ -1,6 +1,6 @@
-import type { User, Food, NutritionRecord, WeeklyStats } from "@prisma/client"
+import type { User, Food, NutritionRecord, WeeklyStats, GlobalFood } from "@prisma/client"
 
-export type { User, Food, NutritionRecord, WeeklyStats }
+export type { User, Food, NutritionRecord, WeeklyStats, GlobalFood }
 
 export type FoodWithRecords = Food & {
   records: NutritionRecord[]
@@ -51,3 +51,23 @@ export const FOOD_CATEGORIES = [
 ] as const
 
 export type FoodCategory = typeof FOOD_CATEGORIES[number]
+
+// 統一的食物介面，消除用戶食物 vs 全域食物的特殊情況
+export type UnifiedFood = {
+  id: string
+  name: string
+  category: string
+  caloriesPer100g: number
+  proteinPer100g: number
+  carbsPer100g: number
+  fatPer100g: number
+  isGlobal: boolean // 標記是否為全域食物
+}
+
+// 食物搜尋結果
+export type FoodSearchResult = {
+  userFoods: UnifiedFood[]
+  globalFoods: UnifiedFood[]
+  isLoading: boolean
+  error: string | null
+}
