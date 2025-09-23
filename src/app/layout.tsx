@@ -30,6 +30,8 @@ export default function RootLayout({
       publishableKey={publishableKey}
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
+      signInFallbackRedirectUrl="/"
+      signUpFallbackRedirectUrl="/"
     >
       <html lang="en">
         <body
