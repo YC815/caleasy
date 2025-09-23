@@ -10,6 +10,7 @@ import { EditNutritionDialog } from "./edit-nutrition-dialog"
 type NutritionListProps = {
   records: NutritionRecordWithFood[]
   showGroupedByDate?: boolean
+  onRecordChange?: () => void
 }
 
 function formatTime(date: Date): string {
@@ -47,7 +48,7 @@ function groupRecordsByDate(records: NutritionRecordWithFood[]): { date: string;
     .sort((a, b) => new Date(b.records[0].recordedAt).getTime() - new Date(a.records[0].recordedAt).getTime())
 }
 
-export function NutritionList({ records, showGroupedByDate = false }: NutritionListProps) {
+export function NutritionList({ records, showGroupedByDate = false, onRecordChange }: NutritionListProps) {
   const [editRecord, setEditRecord] = useState<NutritionRecordWithFood | null>(null)
   const [deleteRecord, setDeleteRecord] = useState<NutritionRecordWithFood | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -58,6 +59,7 @@ export function NutritionList({ records, showGroupedByDate = false }: NutritionL
     setIsDeleting(true)
     try {
       await deleteNutritionRecord(deleteRecord.id)
+      onRecordChange?.()
       setDeleteRecord(null)
     } catch (error) {
       console.error("Error deleting nutrition record:", error)
@@ -140,6 +142,40 @@ export function NutritionList({ records, showGroupedByDate = false }: NutritionL
             </CardContent>
           </Card>
         ))}
+
+        <EditNutritionDialog
+          record={editRecord}
+          isOpen={!!editRecord}
+          onClose={() => setEditRecord(null)}
+          onSuccess={onRecordChange}
+        />
+
+        <Dialog open={!!deleteRecord} onOpenChange={() => setDeleteRecord(null)}>
+          <DialogContent className="max-w-sm mx-auto">
+            <DialogHeader>
+              <DialogTitle>確認刪除</DialogTitle>
+              <DialogDescription>
+                確定要刪除「{deleteRecord?.name || "此營養記錄"}」嗎？此操作無法復原。
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setDeleteRecord(null)}
+                disabled={isDeleting}
+              >
+                取消
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "刪除中..." : "刪除"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     )
   }
@@ -201,6 +237,7 @@ export function NutritionList({ records, showGroupedByDate = false }: NutritionL
         record={editRecord}
         isOpen={!!editRecord}
         onClose={() => setEditRecord(null)}
+        onSuccess={onRecordChange}
       />
 
       <Dialog open={!!deleteRecord} onOpenChange={() => setDeleteRecord(null)}>

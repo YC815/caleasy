@@ -15,7 +15,6 @@ model User {
 
   foods       Food[]
   records     NutritionRecord[]
-  goals       UserGoal[]
   weeklyStats WeeklyStats[]
 }
 
@@ -59,18 +58,6 @@ model NutritionRecord {
   food        Food? @relation(fields: [foodId], references: [id], onDelete: SetNull)
 }
 
-model UserGoal {
-  id              String @id @default(cuid())
-  dailyCalories   Int
-  proteinRatio    Float  // 0-1
-  carbsRatio      Float  // 0-1
-  fatRatio        Float  // 0-1
-
-  userId          String @unique
-  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt       DateTime @default(now())
-}
 
 model WeeklyStats {
   id                String @id @default(cuid())

@@ -14,7 +14,6 @@ import {
 type WeeklyChartProps = {
   thisWeekData: { date: string; calories: number }[]
   lastWeekData: { date: string; calories: number }[]
-  targetCalories?: number
 }
 
 const chartConfig = {
@@ -22,13 +21,9 @@ const chartConfig = {
     label: "熱量",
     color: "hsl(var(--primary))",
   },
-  target: {
-    label: "目標",
-    color: "hsl(var(--muted-foreground))",
-  },
 } satisfies ChartConfig
 
-export function WeeklyChart({ thisWeekData, lastWeekData, targetCalories = 2000 }: WeeklyChartProps) {
+export function WeeklyChart({ thisWeekData, lastWeekData }: WeeklyChartProps) {
   const [isThisWeek, setIsThisWeek] = useState(true)
   const data = isThisWeek ? thisWeekData : lastWeekData
 
@@ -123,31 +118,12 @@ export function WeeklyChart({ thisWeekData, lastWeekData, targetCalories = 2000 
                 strokeWidth: 2
               }}
             />
-            {targetCalories && (
-              <Line
-                dataKey={() => targetCalories}
-                type="monotone"
-                stroke="var(--color-target)"
-                strokeWidth={1}
-                strokeDasharray="5 5"
-                dot={false}
-                activeDot={false}
-              />
-            )}
           </LineChart>
         </ChartContainer>
         <div className="mt-4 space-y-2">
           <div className="text-center text-sm text-muted-foreground">
             {getWeekDateRange(data)}
           </div>
-          {targetCalories && (
-            <div className="flex items-center justify-center text-xs text-muted-foreground">
-              <div className="w-4 h-0.5 bg-primary mr-2"></div>
-              實際攝取
-              <div className="w-4 h-0.5 border-t border-dashed border-muted-foreground ml-4 mr-2"></div>
-              目標 ({targetCalories} 大卡)
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>

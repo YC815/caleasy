@@ -1,6 +1,6 @@
-import type { User, Food, NutritionRecord, UserGoal, WeeklyStats } from "@prisma/client"
+import type { User, Food, NutritionRecord, WeeklyStats } from "@prisma/client"
 
-export type { User, Food, NutritionRecord, UserGoal, WeeklyStats }
+export type { User, Food, NutritionRecord, WeeklyStats }
 
 export type FoodWithRecords = Food & {
   records: NutritionRecord[]

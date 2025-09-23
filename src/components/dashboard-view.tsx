@@ -34,7 +34,6 @@ export function DashboardView({ userId }: DashboardViewProps) {
   const [weeklyChart, setWeeklyChart] = useState<{ date: string; calories: number }[]>([])
   const [lastWeekChart, setLastWeekChart] = useState<{ date: string; calories: number }[]>([])
 
-  const targetCalories = 2000
 
   const loadDailyData = async () => {
     try {
@@ -255,14 +254,12 @@ export function DashboardView({ userId }: DashboardViewProps) {
                 {weeklyStats && (
                   <WeeklySummary
                     weeklyStats={weeklyStats}
-                    targetCalories={targetCalories}
                   />
                 )}
 
                 <WeeklyChart
                   thisWeekData={weeklyChart}
                   lastWeekData={lastWeekChart}
-                  targetCalories={targetCalories}
                 />
 
                 {weeklyStats && (
@@ -276,7 +273,14 @@ export function DashboardView({ userId }: DashboardViewProps) {
         )}
 
         {viewMode === "history" && (
-          <NutritionList records={historyRecords} showGroupedByDate={true} />
+          <NutritionList
+            records={historyRecords}
+            showGroupedByDate={true}
+            onRecordChange={() => {
+              loadData()
+              loadHistoryData()
+            }}
+          />
         )}
       </div>
 
