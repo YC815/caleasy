@@ -59,12 +59,6 @@ function validateEnvironment() {
 async function testDatabaseConnection() {
   try {
     console.log("[DB_TEST] 測試資料庫連接...")
-
-    // 先檢查環境變數
-    if (!validateEnvironment()) {
-      throw new Error("Environment validation failed")
-    }
-
     await db.$queryRaw`SELECT 1`
     console.log("[DB_TEST] 資料庫連接成功")
   } catch (error) {
@@ -77,5 +71,12 @@ async function testDatabaseConnection() {
   }
 }
 
-// 在所有環境中進行連接測試
-testDatabaseConnection()
+// 在啟動時先檢查環境變數，再決定是否進行資料庫測試
+const isEnvironmentValid = validateEnvironment()
+
+if (isEnvironmentValid) {
+  // 在所有環境中進行連接測試
+  void testDatabaseConnection()
+} else {
+  console.warn("[STARTUP] 略過資料庫連接測試：環境變數驗證未通過")
+}
