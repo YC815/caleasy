@@ -75,13 +75,13 @@ export function AddFoodDialog({ category, isOpen, onClose, onSuccess }: AddFoodD
         </DialogHeader>
 
         {!selectedFood ? (
-          <div className="flex-1 flex flex-col gap-4">
+          <div className="flex-1 flex flex-col gap-4 min-h-0">
             <FoodSearchInput
               value={searchQuery}
               onChange={setSearchQuery}
             />
 
-            <div className="flex-1 max-h-80 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto">
               {result.error && (
                 <div className="text-center text-destructive py-4">
                   {result.error}
