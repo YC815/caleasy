@@ -2,7 +2,8 @@
 
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
-import type { Food } from "@/lib/types"
+import { ensureUserExists } from "@/lib/user-utils"
+import type { Food, GlobalFood } from "@prisma/client"
 
 export async function createFood(data: {
   name: string
@@ -53,6 +54,58 @@ export async function updateFood(
   const food = await db.food.update({
     where: { id: foodId },
     data
+  })
+
+  revalidatePath("/")
+  return food
+}
+
+export async function getGlobalFoodsByCategory(category: string): Promise<GlobalFood[]> {
+  return await db.globalFood.findMany({
+    where: {
+      category,
+      isPublished: true
+    },
+    orderBy: { name: "asc" }
+  })
+}
+
+export async function searchGlobalFoods(query: string): Promise<GlobalFood[]> {
+  return await db.globalFood.findMany({
+    where: {
+      name: {
+        contains: query,
+        mode: "insensitive"
+      },
+      isPublished: true
+    },
+    orderBy: { name: "asc" },
+    take: 20
+  })
+}
+
+export async function createFoodFromGlobal(globalFoodId: string, userId: string): Promise<Food> {
+  const globalFood = await db.globalFood.findUnique({
+    where: { id: globalFoodId }
+  })
+
+  if (!globalFood) {
+    throw new Error("Global food not found")
+  }
+
+  // Ensure user exists
+  const user = await ensureUserExists(userId)
+
+  const food = await db.food.create({
+    data: {
+      name: globalFood.name,
+      category: globalFood.category || "其他",
+      caloriesPer100g: globalFood.caloriesPer100g || 0,
+      proteinPer100g: globalFood.proteinPer100g || 0,
+      carbsPer100g: globalFood.carbsPer100g || 0,
+      fatPer100g: globalFood.fatPer100g || 0,
+      userId: user.id
+    }
   })
 
   revalidatePath("/")

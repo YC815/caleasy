@@ -13,9 +13,10 @@ model User {
   name      String?
   createdAt DateTime @default(now())
 
-  foods     Food[]
-  records   FoodRecord[]
-  goals     UserGoal[]
+  foods       Food[]
+  records     FoodRecord[]
+  goals       UserGoal[]
+  weeklyStats WeeklyStats[]
 }
 
 model Food {
@@ -39,7 +40,6 @@ model Food {
 model FoodRecord {
   id        String   @id @default(cuid())
   amount    Int      // in grams
-  mealType  String   // breakfast, lunch, dinner, snack
   recordedAt DateTime @default(now())
 
   userId    String
@@ -60,6 +60,28 @@ model UserGoal {
   user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt       DateTime @default(now())
+}
+
+model WeeklyStats {
+  id                String @id @default(cuid())
+  weekStartDate     DateTime // Monday of the week
+  totalCalories     Int
+  avgDailyCalories  Float
+  totalProtein      Float
+  totalCarbs        Float
+  totalFat          Float
+  avgProtein        Float
+  avgCarbs          Float
+  avgFat            Float
+  recordsCount      Int
+
+  userId            String
+  user              User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([userId, weekStartDate])
 }
 
 model GlobalFood {

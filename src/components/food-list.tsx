@@ -1,13 +1,14 @@
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Edit, Trash2 } from "lucide-react"
-import type { FoodRecordWithFood, MealType } from "@/lib/types"
-import { MEAL_TYPES } from "@/lib/types"
+import type { FoodRecordWithFood } from "@/lib/types"
 import { deleteFoodRecord } from "@/actions/record-actions"
+import { EditFoodDialog } from "./edit-food-dialog"
 
 type FoodListProps = {
   records: FoodRecordWithFood[]
-  onEdit?: (recordId: string) => void
 }
 
 function formatTime(date: Date): string {
@@ -27,7 +28,25 @@ function calculateRecordNutrition(record: FoodRecordWithFood) {
   }
 }
 
-export function FoodList({ records, onEdit }: FoodListProps) {
+export function FoodList({ records }: FoodListProps) {
+  const [editRecord, setEditRecord] = useState<FoodRecordWithFood | null>(null)
+  const [deleteRecord, setDeleteRecord] = useState<FoodRecordWithFood | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const handleDelete = async () => {
+    if (!deleteRecord) return
+
+    setIsDeleting(true)
+    try {
+      await deleteFoodRecord(deleteRecord.id)
+      setDeleteRecord(null)
+    } catch (error) {
+      console.error("Error deleting food record:", error)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   if (!records.length) {
     return (
       <Card>
@@ -43,9 +62,6 @@ export function FoodList({ records, onEdit }: FoodListProps) {
     )
   }
 
-  const handleDelete = async (recordId: string) => {
-    await deleteFoodRecord(recordId)
-  }
 
   return (
     <Card>
@@ -55,7 +71,6 @@ export function FoodList({ records, onEdit }: FoodListProps) {
       <CardContent className="space-y-3">
         {records.map((record) => {
           const nutrition = calculateRecordNutrition(record)
-          const mealLabel = MEAL_TYPES[record.mealType as MealType]
 
           return (
             <div
@@ -71,7 +86,7 @@ export function FoodList({ records, onEdit }: FoodListProps) {
                 </div>
                 <div className="text-sm text-muted-foreground">
                   {record.amount}g • {nutrition.calories} 大卡 •{" "}
-                  {formatTime(new Date(record.recordedAt))} • {mealLabel}
+                  {formatTime(new Date(record.recordedAt))}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
                   蛋白質 {nutrition.protein}g • 碳水 {nutrition.carbs}g • 脂肪{" "}
@@ -79,21 +94,19 @@ export function FoodList({ records, onEdit }: FoodListProps) {
                 </div>
               </div>
               <div className="flex gap-1 ml-2">
-                {onEdit && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-8 w-8 p-0"
-                    onClick={() => onEdit(record.id)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setEditRecord(record)}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
                 <Button
                   size="sm"
                   variant="ghost"
                   className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                  onClick={() => handleDelete(record.id)}
+                  onClick={() => setDeleteRecord(record)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -102,6 +115,39 @@ export function FoodList({ records, onEdit }: FoodListProps) {
           )
         })}
       </CardContent>
+
+      <EditFoodDialog
+        record={editRecord}
+        isOpen={!!editRecord}
+        onClose={() => setEditRecord(null)}
+      />
+
+      <Dialog open={!!deleteRecord} onOpenChange={() => setDeleteRecord(null)}>
+        <DialogContent className="max-w-sm mx-auto">
+          <DialogHeader>
+            <DialogTitle>確認刪除</DialogTitle>
+            <DialogDescription>
+              確定要刪除「{deleteRecord?.food.name}」的記錄嗎？此操作無法復原。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteRecord(null)}
+              disabled={isDeleting}
+            >
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "刪除中..." : "刪除"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }

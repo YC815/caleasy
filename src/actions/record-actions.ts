@@ -2,15 +2,18 @@
 
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
-import type { FoodRecord, FoodRecordWithFood, MealType } from "@/lib/types"
+import { ensureUserExists } from "@/lib/user-utils"
+import type { FoodRecord, FoodRecordWithFood } from "@/lib/types"
 
 export async function createFoodRecord(data: {
   amount: number
-  mealType: MealType
   userId: string
   foodId: string
   recordedAt?: Date
 }): Promise<FoodRecord> {
+  // Ensure user exists
+  await ensureUserExists(data.userId)
+
   const record = await db.foodRecord.create({
     data: {
       ...data,
@@ -67,32 +70,6 @@ export async function getFoodRecordsByDateRange(
   })
 }
 
-export async function getFoodRecordsByMeal(
-  userId: string,
-  mealType: MealType,
-  date: Date = new Date()
-): Promise<FoodRecordWithFood[]> {
-  const startOfDay = new Date(date)
-  startOfDay.setHours(0, 0, 0, 0)
-
-  const endOfDay = new Date(date)
-  endOfDay.setHours(23, 59, 59, 999)
-
-  return await db.foodRecord.findMany({
-    where: {
-      userId,
-      mealType,
-      recordedAt: {
-        gte: startOfDay,
-        lte: endOfDay
-      }
-    },
-    include: {
-      food: true
-    },
-    orderBy: { recordedAt: "asc" }
-  })
-}
 
 export async function deleteFoodRecord(recordId: string): Promise<void> {
   await db.foodRecord.delete({
