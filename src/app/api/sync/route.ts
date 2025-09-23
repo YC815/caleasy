@@ -25,13 +25,15 @@ function mapRow(r: Record<string, unknown>): FoodRow | null {
     String(v ?? '').toLowerCase() === 'true' || v === true || v === 1
   const toNum = (v: unknown) =>
     v === '' || v == null ? null : Number(v)
+  const toStr = (v: unknown) =>
+    v == null || v === '' ? null : String(v)
 
   return {
     id: String(id),
     name: String(name),
-    category: r.category ?? r.分類 ?? null,
-    brand: r.brand ?? r.品牌 ?? null,
-    servingUnit: r.serving_unit ?? r.servingUnit ?? r.單位 ?? null,
+    category: toStr(r.category ?? r.分類),
+    brand: toStr(r.brand ?? r.品牌),
+    servingUnit: toStr(r.serving_unit ?? r.servingUnit ?? r.單位),
     servingSize: toNum(r.serving_size ?? r.servingSize ?? r['每份克數']),
     isPublished: toBool(r.is_published ?? r.isPublished ?? r.發布 ?? r.published),
     updatedAt: new Date().toISOString(),
@@ -54,7 +56,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, count: 0, message: 'no rows' })
     }
 
-    const mapped = rows.map(mapRow).filter(Boolean) as FoodRow[]
+    const mapped = rows.map((r) => mapRow(r as Record<string, unknown>)).filter(Boolean) as FoodRow[]
 
     if (mapped.length === 0) {
       return NextResponse.json({ ok: true, count: 0, message: 'no valid rows' })
