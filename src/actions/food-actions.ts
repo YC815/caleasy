@@ -2,35 +2,8 @@
 
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
-import type { Food, GlobalFood } from "@prisma/client"
-import type { UnifiedFood, FoodSearchResult } from "@/lib/types"
-
-// 統一食物轉換函數 - 消除特殊情況
-function foodToUnified(food: Food): UnifiedFood {
-  return {
-    id: food.id,
-    name: food.name,
-    category: food.category,
-    caloriesPer100g: food.caloriesPer100g,
-    proteinPer100g: food.proteinPer100g,
-    carbsPer100g: food.carbsPer100g,
-    fatPer100g: food.fatPer100g,
-    isGlobal: false
-  }
-}
-
-function globalFoodToUnified(food: GlobalFood): UnifiedFood {
-  return {
-    id: food.id,
-    name: food.name,
-    category: food.category || "其他",
-    caloriesPer100g: food.caloriesPer100g || 0,
-    proteinPer100g: food.proteinPer100g || 0,
-    carbsPer100g: food.carbsPer100g || 0,
-    fatPer100g: food.fatPer100g || 0,
-    isGlobal: true
-  }
-}
+import type { Food } from "@prisma/client"
+import type { FoodSearchResult } from "@/lib/types"
 
 export async function createFood(data: {
   name: string
@@ -39,6 +12,11 @@ export async function createFood(data: {
   proteinPer100g: number
   carbsPer100g: number
   fatPer100g: number
+  brand?: string
+  servingUnit?: string
+  servingSize?: number
+  isGlobal?: boolean
+  createdBy?: string
 }): Promise<Food> {
   console.log("[CREATE_FOOD] 開始創建食物:", {
     hasDb: !!db,
@@ -49,13 +27,26 @@ export async function createFood(data: {
 
   try {
     const food = await db.food.create({
-      data
+      data: {
+        name: data.name,
+        category: data.category,
+        caloriesPer100g: data.caloriesPer100g,
+        proteinPer100g: data.proteinPer100g,
+        carbsPer100g: data.carbsPer100g,
+        fatPer100g: data.fatPer100g,
+        brand: data.brand,
+        servingUnit: data.servingUnit,
+        servingSize: data.servingSize,
+        isGlobal: data.isGlobal ?? false,
+        createdBy: data.createdBy
+      }
     })
 
     console.log("[CREATE_FOOD] 食物創建成功:", {
       foodId: food.id,
       foodName: food.name,
       category: food.category,
+      isGlobal: food.isGlobal,
       timestamp: new Date().toISOString()
     })
 
@@ -72,24 +63,28 @@ export async function createFood(data: {
   }
 }
 
-export async function getFoodsByCategory(category: string): Promise<Food[]> {
+export async function getFoodsByCategory(category: string, globalOnly = false): Promise<Food[]> {
   console.log("[GET_FOODS_BY_CATEGORY] 開始查詢分類食物:", {
     hasDb: !!db,
     hasFoodModel: !!db?.food,
     category,
+    globalOnly,
     timestamp: new Date().toISOString()
   })
 
   try {
     const foods = await db.food.findMany({
       where: {
-        category
+        category,
+        isPublished: true,
+        ...(globalOnly && { isGlobal: true })
       },
       orderBy: { name: "asc" }
     })
 
     console.log("[GET_FOODS_BY_CATEGORY] 查詢成功:", {
       category,
+      globalOnly,
       foodsCount: foods.length,
       foodNames: foods.map(f => f.name),
       timestamp: new Date().toISOString()
@@ -99,6 +94,7 @@ export async function getFoodsByCategory(category: string): Promise<Food[]> {
   } catch (error) {
     console.error("[GET_FOODS_BY_CATEGORY] 查詢失敗:", {
       category,
+      globalOnly,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
@@ -176,65 +172,32 @@ export async function updateFood(
   }
 }
 
-export async function getGlobalFoodsByCategory(category: string): Promise<GlobalFood[]> {
-  console.log("[GET_GLOBAL_FOODS_BY_CATEGORY] 開始查詢全域食物分類:", {
+export async function searchFoods(query: string, category?: string): Promise<Food[]> {
+  console.log("[SEARCH_FOODS] 開始搜索食物:", {
+    query,
     category,
     hasDb: !!db,
-    hasGlobalFoodModel: !!db?.globalFood,
+    hasFoodModel: !!db?.food,
     timestamp: new Date().toISOString()
   })
 
   try {
-    const foods = await db.globalFood.findMany({
-      where: {
-        category,
-        isPublished: true
-      },
-      orderBy: { name: "asc" }
-    })
-
-    console.log("[GET_GLOBAL_FOODS_BY_CATEGORY] 查詢成功:", {
-      category,
-      foodsCount: foods.length,
-      foodNames: foods.map(f => f.name).slice(0, 5), // 只顯示前5個
-      timestamp: new Date().toISOString()
-    })
-
-    return foods
-  } catch (error) {
-    console.error("[GET_GLOBAL_FOODS_BY_CATEGORY] 查詢失敗:", {
-      category,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
-    })
-    throw error
-  }
-}
-
-export async function searchGlobalFoods(query: string): Promise<GlobalFood[]> {
-  console.log("[SEARCH_GLOBAL_FOODS] 開始搜索全域食物:", {
-    query,
-    hasDb: !!db,
-    hasGlobalFoodModel: !!db?.globalFood,
-    timestamp: new Date().toISOString()
-  })
-
-  try {
-    const foods = await db.globalFood.findMany({
+    const foods = await db.food.findMany({
       where: {
         name: {
           contains: query,
           mode: "insensitive"
         },
-        isPublished: true
+        isPublished: true,
+        ...(category && { category })
       },
       orderBy: { name: "asc" },
       take: 20
     })
 
-    console.log("[SEARCH_GLOBAL_FOODS] 搜索成功:", {
+    console.log("[SEARCH_FOODS] 搜索成功:", {
       query,
+      category,
       resultsCount: foods.length,
       firstFewResults: foods.slice(0, 3).map(f => f.name),
       timestamp: new Date().toISOString()
@@ -242,91 +205,9 @@ export async function searchGlobalFoods(query: string): Promise<GlobalFood[]> {
 
     return foods
   } catch (error) {
-    console.error("[SEARCH_GLOBAL_FOODS] 搜索失敗:", {
+    console.error("[SEARCH_FOODS] 搜索失敗:", {
       query,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
-    })
-    throw error
-  }
-}
-
-export async function createFoodFromGlobal(globalFoodId: string): Promise<Food> {
-  console.log("[CREATE_FOOD_FROM_GLOBAL] 開始從全域食物建立共享食物:", {
-    globalFoodId,
-    hasDb: !!db,
-    hasGlobalFoodModel: !!db?.globalFood,
-    hasFoodModel: !!db?.food,
-    timestamp: new Date().toISOString()
-  })
-
-  try {
-    const globalFood = await db.globalFood.findUnique({
-      where: { id: globalFoodId }
-    })
-
-    console.log("[CREATE_FOOD_FROM_GLOBAL] 全域食物查詢結果:", {
-      globalFoodId,
-      found: !!globalFood,
-      globalFoodName: globalFood?.name,
-      timestamp: new Date().toISOString()
-    })
-
-    if (!globalFood) {
-      throw new Error("Global food not found")
-    }
-
-    const category = globalFood.category || "其他"
-
-    const existingFood = await db.food.findFirst({
-      where: {
-        name: globalFood.name,
-        category
-      }
-    })
-
-    if (existingFood) {
-      console.log("[CREATE_FOOD_FROM_GLOBAL] 共享食物已存在，直接返回:", {
-        foodId: existingFood.id,
-        foodName: existingFood.name,
-        category,
-        timestamp: new Date().toISOString()
-      })
-      return existingFood
-    }
-
-    const foodData = {
-      name: globalFood.name,
       category,
-      caloriesPer100g: globalFood.caloriesPer100g || 0,
-      proteinPer100g: globalFood.proteinPer100g || 0,
-      carbsPer100g: globalFood.carbsPer100g || 0,
-      fatPer100g: globalFood.fatPer100g || 0
-    }
-
-    console.log("[CREATE_FOOD_FROM_GLOBAL] 準備建立共享食物資料:", {
-      foodData,
-      timestamp: new Date().toISOString()
-    })
-
-    const food = await db.food.create({
-      data: foodData
-    })
-
-    console.log("[CREATE_FOOD_FROM_GLOBAL] 共享食物建立成功:", {
-      foodId: food.id,
-      foodName: food.name,
-      fromGlobalId: globalFoodId,
-      category: food.category,
-      timestamp: new Date().toISOString()
-    })
-
-    revalidatePath("/")
-    return food
-  } catch (error) {
-    console.error("[CREATE_FOOD_FROM_GLOBAL] 從全域食物建立共享食物失敗:", {
-      globalFoodId,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
@@ -335,7 +216,7 @@ export async function createFoodFromGlobal(globalFoodId: string): Promise<Food> 
   }
 }
 
-// 統一的食物搜尋函數 - 消除分散的邏輯
+// 統一的食物搜尋函數
 export async function searchFoodsUnified(
   category: string,
   query?: string
@@ -347,45 +228,29 @@ export async function searchFoodsUnified(
   })
 
   try {
-    const [foods, globalFoods] = await Promise.all([
-      db.food.findMany({
-        where: {
-          category,
-          ...(query && {
-            name: {
-              contains: query,
-              mode: "insensitive" as const
-            }
-          })
-        },
-        orderBy: { name: "asc" }
-      }),
-      query && query.length >= 2
-        ? db.globalFood.findMany({
-            where: {
-              category,
-              name: {
-                contains: query,
-                mode: "insensitive" as const
-              },
-              isPublished: true
-            },
-            orderBy: { name: "asc" },
-            take: 20
-          })
-        : []
-    ])
+    const foods = await db.food.findMany({
+      where: {
+        category,
+        isPublished: true,
+        ...(query && {
+          name: {
+            contains: query,
+            mode: "insensitive" as const
+          }
+        })
+      },
+      orderBy: { name: "asc" },
+      take: query ? 20 : undefined
+    })
 
     const result: FoodSearchResult = {
-      foods: foods.map(foodToUnified),
-      globalFoods: (globalFoods || []).map(globalFoodToUnified),
+      foods,
       isLoading: false,
       error: null
     }
 
     console.log("[SEARCH_FOODS_UNIFIED] 搜尋成功:", {
       foodsCount: result.foods.length,
-      globalFoodsCount: result.globalFoods.length,
       timestamp: new Date().toISOString()
     })
 
@@ -401,7 +266,6 @@ export async function searchFoodsUnified(
 
     return {
       foods: [],
-      globalFoods: [],
       isLoading: false,
       error: error instanceof Error ? error.message : "搜尋失敗"
     }

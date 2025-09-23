@@ -9,12 +9,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useUser } from "@clerk/nextjs"
-import { createFoodBasedRecord } from "@/actions/record-actions"
+import { createNutritionRecordFromFood } from "@/actions/record-actions"
 import { useFoodSearch } from "@/hooks/use-food-search"
 import { FoodSearchInput } from "@/components/food-search-input"
 import { FoodList } from "@/components/food-list"
 import { FoodAmountForm } from "@/components/food-amount-form"
-import type { FoodCategory, UnifiedFood } from "@/lib/types"
+import type { FoodCategory, Food } from "@/lib/types"
 
 type AddFoodDialogProps = {
   category: FoodCategory
@@ -26,21 +26,15 @@ type AddFoodDialogProps = {
 export function AddFoodDialog({ category, isOpen, onClose, onSuccess }: AddFoodDialogProps) {
   const { user } = useUser()
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedFood, setSelectedFood] = useState<UnifiedFood | null>(null)
+  const [selectedFood, setSelectedFood] = useState<Food | null>(null)
 
-  // 使用統一的搜尋 hook - 消除複雜邏輯
-  const { searchQuery, setSearchQuery, result, addGlobalFood } = useFoodSearch(category)
+  // 使用統一的搜尋 hook - 簡化後的邏輯
+  const { searchQuery, setSearchQuery, result, selectFood } = useFoodSearch(category)
 
-  // 處理食物選擇 - 統一邏輯
-  const handleFoodSelect = async (food: UnifiedFood) => {
-    if (food.isGlobal) {
-      const userFood = await addGlobalFood(food)
-      if (userFood) {
-        setSelectedFood(userFood)
-      }
-    } else {
-      setSelectedFood(food)
-    }
+  // 處理食物選擇 - 簡化邏輯（不再需要轉換）
+  const handleFoodSelect = (food: Food) => {
+    const selectedFood = selectFood(food)
+    setSelectedFood(selectedFood)
   }
 
   // 提交記錄 - 簡化邏輯
@@ -49,10 +43,7 @@ export function AddFoodDialog({ category, isOpen, onClose, onSuccess }: AddFoodD
 
     setIsLoading(true)
     try {
-      await createFoodBasedRecord(user.id, {
-        foodId: selectedFood.id,
-        amount
-      })
+      await createNutritionRecordFromFood(user.id, selectedFood.id, amount)
 
       handleClose()
       onSuccess?.()
@@ -70,8 +61,8 @@ export function AddFoodDialog({ category, isOpen, onClose, onSuccess }: AddFoodD
     onClose()
   }
 
-  // 決定顯示的食物清單
-  const displayFoods = searchQuery.length >= 2 ? result.globalFoods : result.foods
+  // 統一顯示所有食物（不再區分全域/用戶）
+  const displayFoods = result.foods
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>

@@ -1,16 +1,15 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { searchFoodsUnified, createFoodFromGlobal } from "@/actions/food-actions"
+import { searchFoodsUnified } from "@/actions/food-actions"
 import { useErrorHandler } from "@/hooks/use-error-handler"
-import type { UnifiedFood, FoodSearchResult } from "@/lib/types"
+import type { Food, FoodSearchResult } from "@/lib/types"
 
-// 簡潔的食物搜尋 hook - 消除 AddFoodDialog 的複雜邏輯
+// 簡潔的食物搜尋 hook - 統一食物系統
 export function useFoodSearch(category: string) {
   const [searchQuery, setSearchQuery] = useState("")
   const [result, setResult] = useState<FoodSearchResult>({
     foods: [],
-    globalFoods: [],
     isLoading: false,
     error: null
   })
@@ -30,28 +29,10 @@ export function useFoodSearch(category: string) {
     }
   }, [category, handleAsyncError])
 
-  // 添加全域食物到用戶清單
-  const addGlobalFood = useCallback(async (globalFood: UnifiedFood): Promise<UnifiedFood | null> => {
-    if (!globalFood.isGlobal) return null
-
-    const createdFood = await handleAsyncError(() => createFoodFromGlobal(globalFood.id))
-
-    if (!createdFood) return null
-
-    // 重新搜尋以更新清單
-    await searchFoods(searchQuery)
-
-    return {
-      id: createdFood.id,
-      name: createdFood.name,
-      category: createdFood.category,
-      caloriesPer100g: createdFood.caloriesPer100g,
-      proteinPer100g: createdFood.proteinPer100g,
-      carbsPer100g: createdFood.carbsPer100g,
-      fatPer100g: createdFood.fatPer100g,
-      isGlobal: false
-    }
-  }, [searchQuery, searchFoods, handleAsyncError])
+  // 選擇食物 - 不再需要轉換邏輯
+  const selectFood = useCallback((food: Food) => {
+    return food
+  }, [])
 
   // 自動搜尋邏輯
   useEffect(() => {
@@ -62,7 +43,7 @@ export function useFoodSearch(category: string) {
     searchQuery,
     setSearchQuery,
     result,
-    addGlobalFood,
+    selectFood,
     refresh: () => searchFoods(searchQuery)
   }
 }

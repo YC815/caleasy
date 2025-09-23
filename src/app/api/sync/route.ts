@@ -64,24 +64,32 @@ export async function POST(req: NextRequest) {
 
     await db.$transaction(async (tx) => {
       for (const food of mapped) {
-        await tx.globalFood.upsert({
+        await tx.food.upsert({
           where: { id: food.id },
           update: {
             name: food.name,
-            category: food.category,
+            category: food.category || "其他",
             brand: food.brand,
             servingUnit: food.servingUnit,
             servingSize: food.servingSize,
+            caloriesPer100g: 0,
+            proteinPer100g: 0,
+            carbsPer100g: 0,
+            fatPer100g: 0,
             isPublished: food.isPublished,
             updatedAt: new Date(),
           },
           create: {
             id: food.id,
             name: food.name,
-            category: food.category,
+            category: food.category || "其他",
             brand: food.brand,
             servingUnit: food.servingUnit,
             servingSize: food.servingSize,
+            caloriesPer100g: 0,
+            proteinPer100g: 0,
+            carbsPer100g: 0,
+            fatPer100g: 0,
             isPublished: food.isPublished,
           },
         })

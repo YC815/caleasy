@@ -14,9 +14,8 @@ import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Search, ArrowLeft, Plus } from "lucide-react"
 import { updateNutritionRecord } from "@/actions/record-actions"
-import { getFoodsByCategory, searchGlobalFoods, createFoodFromGlobal } from "@/actions/food-actions"
+import { getFoodsByCategory, searchFoods } from "@/actions/food-actions"
 import type { NutritionRecordWithFood, Food, FoodCategory } from "@/lib/types"
-import type { GlobalFood } from "@prisma/client"
 
 type EditNutritionDialogProps = {
   record: NutritionRecordWithFood | null
@@ -44,7 +43,7 @@ export function EditNutritionDialog({ record, isOpen, onClose, onSuccess }: Edit
     amount: "",
     searchQuery: "",
     availableFoods: [] as Food[],
-    globalFoods: [] as GlobalFood[]
+    globalFoods: [] as Food[]
   })
 
   useEffect(() => {
@@ -91,7 +90,7 @@ export function EditNutritionDialog({ record, isOpen, onClose, onSuccess }: Edit
       return
     }
     try {
-      const foods = await searchGlobalFoods(foodData.searchQuery)
+      const foods = await searchFoods(foodData.searchQuery, foodData.selectedCategory || undefined)
       setFoodData(prev => ({ ...prev, globalFoods: foods }))
     } catch (error) {
       console.error("Error searching global foods:", error)
@@ -164,11 +163,11 @@ export function EditNutritionDialog({ record, isOpen, onClose, onSuccess }: Edit
     }
   }
 
-  const handleGlobalFoodSelect = async (globalFood: GlobalFood) => {
+  const handleGlobalFoodSelect = async (globalFood: Food) => {
     if (!foodData.selectedCategory) return
     setIsLoading(true)
     try {
-      const food = await createFoodFromGlobal(globalFood.id)
+      const food = globalFood // 不再需要轉換
       setFoodData(prev => ({ ...prev, selectedFood: food }))
       setStep("edit")
     } catch (error) {
@@ -199,7 +198,7 @@ export function EditNutritionDialog({ record, isOpen, onClose, onSuccess }: Edit
   }
 
   const handleFoodDataChange = (field: keyof typeof foodData) => (
-    value: string | Food | null | GlobalFood[] | FoodCategory | null
+    value: string | Food | null | Food[] | FoodCategory | null
   ) => {
     setFoodData(prev => ({
       ...prev,

@@ -4,10 +4,10 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import type { UnifiedFood } from "@/lib/types"
+import type { Food } from "@/lib/types"
 
 type FoodAmountFormProps = {
-  selectedFood: UnifiedFood
+  selectedFood: Food
   onSubmit: (amount: number) => Promise<void>
   onBack: () => void
   isLoading: boolean

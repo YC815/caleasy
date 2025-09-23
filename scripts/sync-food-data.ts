@@ -77,11 +77,11 @@ async function syncFoodData() {
 
       const promises = batch.map(async (food) => {
         try {
-          const existing = await prisma.globalFood.findUnique({
+          const existing = await prisma.food.findUnique({
             where: { id: food.id }
           })
 
-          const result = await prisma.globalFood.upsert({
+          await prisma.food.upsert({
             where: { id: food.id },
             update: {
               name: food.name,

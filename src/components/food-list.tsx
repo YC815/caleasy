@@ -2,13 +2,13 @@
 
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
-import type { UnifiedFood } from "@/lib/types"
+import type { Food } from "@/lib/types"
 
 type FoodListProps = {
-  foods: UnifiedFood[]
+  foods: Food[]
   searchQuery: string
   categoryName: string
-  onFoodSelect: (food: UnifiedFood) => void
+  onFoodSelect: (food: Food) => void
 }
 
 export function FoodList({ foods, searchQuery, categoryName, onFoodSelect }: FoodListProps) {
@@ -35,7 +35,7 @@ export function FoodList({ foods, searchQuery, categoryName, onFoodSelect }: Foo
               {food.caloriesPer100g} 大卡/100g
             </div>
           </div>
-          {food.isGlobal && <Plus className="h-4 w-4" />}
+          {food.isGlobal && <Plus className="h-4 w-4 text-muted-foreground" />}
         </Button>
       ))}
     </div>

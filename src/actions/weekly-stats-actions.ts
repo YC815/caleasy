@@ -65,6 +65,7 @@ export async function calculateWeeklyStats(userId: string, date: Date = new Date
         avgCarbs: 0,
         avgFat: 0,
         recordsCount: 0,
+        actualDays: 0,
         createdAt: new Date(),
         updatedAt: new Date()
       }
@@ -72,21 +73,34 @@ export async function calculateWeeklyStats(userId: string, date: Date = new Date
 
     console.log("[CALCULATE_WEEKLY_STATS] 計算總營養值...")
     const totalNutrition = calculateNutrition(records)
-    const daysInWeek = 7
+
+    // 計算實際有記錄的天數 - 修正平均值計算錯誤
+    const recordDates = new Set(
+      records.map(r => r.recordedAt.toISOString().split('T')[0])
+    )
+    const actualDays = recordDates.size || 1 // 避免除以零
+
+    console.log("[CALCULATE_WEEKLY_STATS] 計算實際記錄天數:", {
+      totalRecords: records.length,
+      uniqueDates: Array.from(recordDates),
+      actualDays,
+      timestamp: new Date().toISOString()
+    })
 
     const weeklyStats = {
       id: "",
       userId,
       weekStartDate: weekStart,
       totalCalories: totalNutrition.calories,
-      avgDailyCalories: Math.round(totalNutrition.calories / daysInWeek),
+      avgDailyCalories: Math.round(totalNutrition.calories / actualDays),
       totalProtein: totalNutrition.protein,
       totalCarbs: totalNutrition.carbs,
       totalFat: totalNutrition.fat,
-      avgProtein: Math.round(totalNutrition.protein / daysInWeek * 10) / 10,
-      avgCarbs: Math.round(totalNutrition.carbs / daysInWeek * 10) / 10,
-      avgFat: Math.round(totalNutrition.fat / daysInWeek * 10) / 10,
+      avgProtein: Math.round(totalNutrition.protein / actualDays * 10) / 10,
+      avgCarbs: Math.round(totalNutrition.carbs / actualDays * 10) / 10,
+      avgFat: Math.round(totalNutrition.fat / actualDays * 10) / 10,
       recordsCount: records.length,
+      actualDays: actualDays,
       createdAt: new Date(),
       updatedAt: new Date()
     }
@@ -187,7 +201,8 @@ export async function getOrCreateWeeklyStats(userId: string, date: Date = new Da
         avgProtein: calculated.avgProtein,
         avgCarbs: calculated.avgCarbs,
         avgFat: calculated.avgFat,
-        recordsCount: calculated.recordsCount
+        recordsCount: calculated.recordsCount,
+        actualDays: calculated.actualDays
       }
     })
 
@@ -243,7 +258,8 @@ export async function updateWeeklyStats(userId: string, date: Date = new Date())
       avgProtein: calculated.avgProtein,
       avgCarbs: calculated.avgCarbs,
       avgFat: calculated.avgFat,
-      recordsCount: calculated.recordsCount
+      recordsCount: calculated.recordsCount,
+      actualDays: calculated.actualDays
     }
 
     const createData = {
