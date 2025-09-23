@@ -13,7 +13,6 @@ model User {
   name      String?
   createdAt DateTime @default(now())
 
-  foods       Food[]
   records     NutritionRecord[]
   weeklyStats WeeklyStats[]
 }
@@ -27,13 +26,11 @@ model Food {
   carbsPer100g    Float
   fatPer100g      Float
 
-  userId      String
-  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
   records     NutritionRecord[]
 
   createdAt   DateTime @default(now())
 
-  @@unique([userId, name])
+  @@unique([name, category])
 }
 
 model NutritionRecord {

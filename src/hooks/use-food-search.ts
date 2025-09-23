@@ -6,10 +6,10 @@ import { useErrorHandler } from "@/hooks/use-error-handler"
 import type { UnifiedFood, FoodSearchResult } from "@/lib/types"
 
 // 簡潔的食物搜尋 hook - 消除 AddFoodDialog 的複雜邏輯
-export function useFoodSearch(userId: string | undefined, category: string) {
+export function useFoodSearch(category: string) {
   const [searchQuery, setSearchQuery] = useState("")
   const [result, setResult] = useState<FoodSearchResult>({
-    userFoods: [],
+    foods: [],
     globalFoods: [],
     isLoading: false,
     error: null
@@ -18,25 +18,23 @@ export function useFoodSearch(userId: string | undefined, category: string) {
 
   // 搜尋函數 - 統一處理用戶和全域食物
   const searchFoods = useCallback(async (query: string) => {
-    if (!userId) return
-
     setResult(prev => ({ ...prev, isLoading: true, error: null }))
 
     const searchResult = await handleAsyncError(
-      () => searchFoodsUnified(userId, category, query),
+      () => searchFoodsUnified(category, query),
       () => setResult(prev => ({ ...prev, isLoading: false, error: "搜尋失敗" }))
     )
 
     if (searchResult) {
       setResult(searchResult)
     }
-  }, [userId, category, handleAsyncError])
+  }, [category, handleAsyncError])
 
   // 添加全域食物到用戶清單
   const addGlobalFood = useCallback(async (globalFood: UnifiedFood): Promise<UnifiedFood | null> => {
-    if (!userId || !globalFood.isGlobal) return null
+    if (!globalFood.isGlobal) return null
 
-    const createdFood = await handleAsyncError(() => createFoodFromGlobal(globalFood.id, userId))
+    const createdFood = await handleAsyncError(() => createFoodFromGlobal(globalFood.id))
 
     if (!createdFood) return null
 
@@ -53,14 +51,12 @@ export function useFoodSearch(userId: string | undefined, category: string) {
       fatPer100g: createdFood.fatPer100g,
       isGlobal: false
     }
-  }, [userId, searchQuery, searchFoods, handleAsyncError])
+  }, [searchQuery, searchFoods, handleAsyncError])
 
   // 自動搜尋邏輯
   useEffect(() => {
-    if (!userId) return
-
     searchFoods(searchQuery)
-  }, [searchQuery, userId, searchFoods])
+  }, [searchQuery, searchFoods])
 
   return {
     searchQuery,
