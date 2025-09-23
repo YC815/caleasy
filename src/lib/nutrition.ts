@@ -24,19 +24,19 @@ export function calculateMacroRatios(nutrition: NutritionSummary): MacroRatio[] 
       name: "碳水化合物",
       value: Math.round((nutrition.carbs * 4 / total) * 100),
       calories: Math.round(nutrition.carbs * 4),
-      color: "hsl(var(--chart-1))"
+      color: "#3b82f6"
     },
     {
       name: "蛋白質",
       value: Math.round((nutrition.protein * 4 / total) * 100),
       calories: Math.round(nutrition.protein * 4),
-      color: "hsl(var(--chart-2))"
+      color: "#1e40af"
     },
     {
       name: "脂肪",
       value: Math.round((nutrition.fat * 9 / total) * 100),
       calories: Math.round(nutrition.fat * 9),
-      color: "hsl(var(--chart-3))"
+      color: "#60a5fa"
     }
   ]
 }

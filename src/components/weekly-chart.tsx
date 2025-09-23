@@ -1,15 +1,32 @@
 "use client"
 
 import { useState } from "react"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart"
 
 type WeeklyChartProps = {
   thisWeekData: { date: string; calories: number }[]
   lastWeekData: { date: string; calories: number }[]
   targetCalories?: number
 }
+
+const chartConfig = {
+  calories: {
+    label: "熱量",
+    color: "hsl(var(--primary))",
+  },
+  target: {
+    label: "目標",
+    color: "hsl(var(--muted-foreground))",
+  },
+} satisfies ChartConfig
 
 export function WeeklyChart({ thisWeekData, lastWeekData, targetCalories = 2000 }: WeeklyChartProps) {
   const [isThisWeek, setIsThisWeek] = useState(true)
@@ -51,62 +68,74 @@ export function WeeklyChart({ thisWeekData, lastWeekData, targetCalories = 2000 
         </div>
       </CardHeader>
       <CardContent>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis
-                dataKey="date"
-                className="text-xs"
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(value) => {
-                  const date = new Date(value)
-                  return date.toLocaleDateString("zh-TW", { weekday: "short" })
-                }}
-              />
-              <YAxis
-                className="text-xs"
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                content={({ active, payload, label }) => {
-                  if (active && payload && payload.length) {
-                    return (
-                      <div className="bg-background border rounded-lg p-2 shadow-sm">
-                        <p className="text-sm font-medium">{label}</p>
-                        <p className="text-sm text-muted-foreground">
-                          熱量: {payload[0].value} 大卡
-                        </p>
-                      </div>
-                    )
-                  }
-                  return null
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="calories"
-                stroke="hsl(var(--primary))"
-                strokeWidth={2}
-                dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, stroke: "hsl(var(--primary))", strokeWidth: 2 }}
-              />
-              {targetCalories && (
-                <Line
-                  type="monotone"
-                  dataKey={() => targetCalories}
-                  stroke="hsl(var(--muted-foreground))"
-                  strokeWidth={1}
-                  strokeDasharray="5 5"
-                  dot={false}
-                  activeDot={false}
+        <ChartContainer config={chartConfig} className="h-64 w-full">
+          <LineChart
+            accessibilityLayer
+            data={data}
+            margin={{
+              left: 12,
+              right: 12,
+            }}
+          >
+            <CartesianGrid vertical={false} />
+            <XAxis
+              dataKey="date"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              tickFormatter={(value) => {
+                const date = new Date(value)
+                return date.toLocaleDateString("zh-TW", { weekday: "short" })
+              }}
+            />
+            <ChartTooltip
+              cursor={false}
+              content={
+                <ChartTooltipContent
+                  className="w-[150px]"
+                  labelFormatter={(value) => {
+                    const date = new Date(value)
+                    return date.toLocaleDateString("zh-TW", {
+                      month: "short",
+                      day: "numeric"
+                    })
+                  }}
+                  formatter={(value, name) => [
+                    `${value} 大卡`,
+                    chartConfig[name as keyof typeof chartConfig]?.label || name
+                  ]}
                 />
-              )}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+              }
+            />
+            <Line
+              dataKey="calories"
+              type="monotone"
+              stroke="var(--color-calories)"
+              strokeWidth={2}
+              dot={{
+                fill: "var(--color-calories)",
+                strokeWidth: 2,
+                r: 4
+              }}
+              activeDot={{
+                r: 6,
+                stroke: "var(--color-calories)",
+                strokeWidth: 2
+              }}
+            />
+            {targetCalories && (
+              <Line
+                dataKey={() => targetCalories}
+                type="monotone"
+                stroke="var(--color-target)"
+                strokeWidth={1}
+                strokeDasharray="5 5"
+                dot={false}
+                activeDot={false}
+              />
+            )}
+          </LineChart>
+        </ChartContainer>
         <div className="mt-4 space-y-2">
           <div className="text-center text-sm text-muted-foreground">
             {getWeekDateRange(data)}
