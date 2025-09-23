@@ -10,14 +10,14 @@ import { Plus } from "lucide-react"
 import { FOOD_CATEGORIES, MEAL_TYPES, type FoodCategory, type MealType } from "@/lib/types"
 import { createFood } from "@/actions/food-actions"
 import { createFoodRecord } from "@/actions/record-actions"
-
-const DEFAULT_USER_ID = "user_1" // TODO: Replace with actual user authentication
+import { useUser } from "@clerk/nextjs"
 
 type AddFoodDialogProps = {
   onSuccess?: () => void
 }
 
 export function AddFoodDialog({ onSuccess }: AddFoodDialogProps) {
+  const { user } = useUser()
   const [isOpen, setIsOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
@@ -45,6 +45,8 @@ export function AddFoodDialog({ onSuccess }: AddFoodDialogProps) {
   }
 
   const handleSubmit = async () => {
+    if (!user?.id) return
+
     setIsSubmitting(true)
     try {
       const food = await createFood({
@@ -54,13 +56,13 @@ export function AddFoodDialog({ onSuccess }: AddFoodDialogProps) {
         proteinPer100g: parseFloat(formData.proteinPer100g),
         carbsPer100g: parseFloat(formData.carbsPer100g),
         fatPer100g: parseFloat(formData.fatPer100g),
-        userId: DEFAULT_USER_ID
+        userId: user.id
       })
 
       await createFoodRecord({
         amount: parseInt(formData.amount),
         mealType: formData.mealType as MealType,
-        userId: DEFAULT_USER_ID,
+        userId: user.id,
         foodId: food.id
       })
 

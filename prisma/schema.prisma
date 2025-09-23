@@ -61,3 +61,16 @@ model UserGoal {
 
   createdAt       DateTime @default(now())
 }
+
+model GlobalFood {
+  id            String    @id
+  name          String
+  category      String?
+  brand         String?
+  servingUnit   String?
+  servingSize   Float?
+  isPublished   Boolean   @default(false)
+  updatedAt     DateTime  @default(now()) @updatedAt
+
+  @@map("global_foods")
+}

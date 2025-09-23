@@ -3,20 +3,19 @@ import { NutritionChart } from "@/components/nutrition-chart"
 import { FoodList } from "@/components/food-list"
 import { AddFoodDialog } from "@/components/add-food-dialog"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { BarChart3, History, Calendar, User } from "lucide-react"
+import { UserButton } from "@clerk/nextjs"
+import { BarChart3, History, Calendar } from "lucide-react"
 import { getFoodRecordsByDate } from "@/actions/record-actions"
 import { calculateNutrition, calculateMacroRatios } from "@/lib/nutrition"
+import { auth } from "@clerk/nextjs/server"
 
-const DEFAULT_USER_ID = "user_1"
-
-async function getDayData() {
+async function getDayData(userId: string) {
   const today = new Date()
   const yesterday = new Date(today)
   yesterday.setDate(yesterday.getDate() - 1)
 
-  const todayRecords = await getFoodRecordsByDate(DEFAULT_USER_ID, today)
-  const yesterdayRecords = await getFoodRecordsByDate(DEFAULT_USER_ID, yesterday)
+  const todayRecords = await getFoodRecordsByDate(userId, today)
+  const yesterdayRecords = await getFoodRecordsByDate(userId, yesterday)
 
   const todayNutrition = calculateNutrition(todayRecords)
   const yesterdayNutrition = calculateNutrition(yesterdayRecords)
@@ -31,7 +30,13 @@ async function getDayData() {
 }
 
 export default async function Home() {
-  const { todayRecords, todayNutrition, yesterdayCalories, macros } = await getDayData()
+  const { userId } = await auth()
+
+  if (!userId) {
+    throw new Error('User not authenticated')
+  }
+
+  const { todayRecords, todayNutrition, yesterdayCalories, macros } = await getDayData(userId)
 
   const weekAverage = 1750
   const targetCalories = 2000
@@ -51,12 +56,13 @@ export default async function Home() {
             </Button>
           </div>
 
-          <Avatar className="h-8 w-8">
-            <AvatarImage src="/diverse-user-avatars.png" />
-            <AvatarFallback>
-              <User className="h-4 w-4" />
-            </AvatarFallback>
-          </Avatar>
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: "h-8 w-8"
+              }
+            }}
+          />
         </div>
       </div>
 
