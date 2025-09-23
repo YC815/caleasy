@@ -63,14 +63,18 @@ model UserGoal {
 }
 
 model GlobalFood {
-  id            String    @id
-  name          String
-  category      String?
-  brand         String?
-  servingUnit   String?
-  servingSize   Float?
-  isPublished   Boolean   @default(false)
-  updatedAt     DateTime  @default(now()) @updatedAt
+  id              String    @id
+  name            String
+  category        String?
+  brand           String?
+  servingUnit     String?
+  servingSize     Float?
+  caloriesPer100g Int?
+  proteinPer100g  Float?
+  carbsPer100g    Float?
+  fatPer100g      Float?
+  isPublished     Boolean   @default(false)
+  updatedAt       DateTime  @default(now()) @updatedAt
 
   @@map("global_foods")
 }
