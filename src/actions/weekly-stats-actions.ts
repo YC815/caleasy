@@ -4,6 +4,7 @@ import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { getNutritionRecordsByDateRange } from "./record-actions"
 import { calculateNutrition } from "@/lib/nutrition"
+import { ensureUserExists } from "@/lib/user-utils"
 import type { WeeklyStats } from "@/lib/types"
 
 function getWeekStartDate(date: Date): Date {
@@ -132,6 +133,9 @@ export async function getOrCreateWeeklyStats(userId: string, date: Date = new Da
   })
 
   try {
+    console.log("[GET_OR_CREATE_WEEKLY_STATS] 確保用戶存在:", { userId })
+    await ensureUserExists(userId)
+
     console.log("[GET_OR_CREATE_WEEKLY_STATS] 查找現有週統計...")
     const existing = await db.weeklyStats.findUnique({
       where: {
@@ -224,6 +228,9 @@ export async function updateWeeklyStats(userId: string, date: Date = new Date())
   })
 
   try {
+    console.log("[UPDATE_WEEKLY_STATS] 確保用戶存在:", { userId })
+    await ensureUserExists(userId)
+
     console.log("[UPDATE_WEEKLY_STATS] 計算新的週統計...")
     const calculated = await calculateWeeklyStats(userId, date)
 
@@ -308,6 +315,9 @@ export async function getWeeklyStatsHistory(userId: string, weeksBack: number = 
   })
 
   try {
+    console.log("[GET_WEEKLY_STATS_HISTORY] 確保用戶存在:", { userId })
+    await ensureUserExists(userId)
+
     const stats = await db.weeklyStats.findMany({
       where: {
         userId,
@@ -356,6 +366,9 @@ export async function getDailyCaloriesForWeek(userId: string, date: Date = new D
   })
 
   try {
+    console.log("[GET_DAILY_CALORIES_FOR_WEEK] 確保用戶存在:", { userId })
+    await ensureUserExists(userId)
+
     const dailyData: { date: string; calories: number }[] = []
 
     for (let i = 0; i < 7; i++) {
