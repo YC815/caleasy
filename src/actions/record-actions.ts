@@ -189,11 +189,12 @@ export async function getNutritionRecordsByDate(
   userId: string,
   date: Date = new Date()
 ): Promise<NutritionRecordWithFood[]> {
-  const startOfDay = new Date(date)
-  startOfDay.setHours(0, 0, 0, 0)
+  // 使用 UTC 時間確保跨時區一致性
+  const utcDate = new Date(date.toISOString().split('T')[0] + 'T00:00:00.000Z')
 
-  const endOfDay = new Date(date)
-  endOfDay.setHours(23, 59, 59, 999)
+  const startOfDay = new Date(utcDate)
+  const endOfDay = new Date(utcDate)
+  endOfDay.setUTCHours(23, 59, 59, 999)
 
   console.log("[GET_NUTRITION_BY_DATE] 開始查詢日期營養記錄:", {
     userId,
@@ -249,6 +250,9 @@ export async function getNutritionRecordsByDateRange(
   startDate: Date,
   endDate: Date
 ): Promise<NutritionRecordWithFood[]> {
+  // 確保使用 UTC 時間進行範圍查詢
+  const utcStartDate = new Date(startDate.toISOString().split('T')[0] + 'T00:00:00.000Z')
+  const utcEndDate = new Date(endDate.toISOString().split('T')[0] + 'T23:59:59.999Z')
   console.log("[GET_NUTRITION_BY_RANGE] 開始查詢日期範圍營養記錄:", {
     userId,
     startDate: startDate.toISOString(),
@@ -264,8 +268,8 @@ export async function getNutritionRecordsByDateRange(
       where: {
         userId,
         recordedAt: {
-          gte: startDate,
-          lte: endDate
+          gte: utcStartDate,
+          lte: utcEndDate
         }
       },
       include: {

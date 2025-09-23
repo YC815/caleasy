@@ -362,13 +362,10 @@ export async function getDailyCaloriesForWeek(userId: string, date: Date = new D
       const currentDate = new Date(weekStart)
       currentDate.setDate(currentDate.getDate() + i)
 
-      // Set to start of day for proper date range query
-      const dayStart = new Date(currentDate)
-      dayStart.setHours(0, 0, 0, 0)
-
-      // Set to end of day
-      const dayEnd = new Date(currentDate)
-      dayEnd.setHours(23, 59, 59, 999)
+      // 使用 UTC 時間確保跨時區一致性
+      const dateStr = currentDate.toISOString().split('T')[0]
+      const dayStart = new Date(dateStr + 'T00:00:00.000Z')
+      const dayEnd = new Date(dateStr + 'T23:59:59.999Z')
 
       console.log(`[GET_DAILY_CALORIES_FOR_WEEK] 查詢第${i + 1}天 (${currentDate.toISOString().split('T')[0]}) 記錄...`)
       const dayRecords = await getNutritionRecordsByDateRange(userId, dayStart, dayEnd)
