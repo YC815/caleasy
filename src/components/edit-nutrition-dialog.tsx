@@ -13,7 +13,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Search, ArrowLeft, Plus } from "lucide-react"
-import { useUser } from "@clerk/nextjs"
 import { updateNutritionRecord } from "@/actions/record-actions"
 import { getFoodsByCategory, searchGlobalFoods, createFoodFromGlobal } from "@/actions/food-actions"
 import type { NutritionRecordWithFood, Food, FoodCategory } from "@/lib/types"
@@ -27,7 +26,6 @@ type EditNutritionDialogProps = {
 }
 
 export function EditNutritionDialog({ record, isOpen, onClose, onSuccess }: EditNutritionDialogProps) {
-  const { user } = useUser()
   const [isLoading, setIsLoading] = useState(false)
   const [editMode, setEditMode] = useState<"nutrition" | "food">("nutrition")
   const [step, setStep] = useState<"edit" | "select-category" | "select-food">("edit")
@@ -45,7 +43,7 @@ export function EditNutritionDialog({ record, isOpen, onClose, onSuccess }: Edit
     selectedCategory: null as FoodCategory | null,
     amount: "",
     searchQuery: "",
-    userFoods: [] as Food[],
+    availableFoods: [] as Food[],
     globalFoods: [] as GlobalFood[]
   })
 
@@ -69,20 +67,19 @@ export function EditNutritionDialog({ record, isOpen, onClose, onSuccess }: Edit
           selectedFood: record.food,
           amount: record.amount?.toString() || "",
           searchQuery: "",
-          userFoods: [],
+          availableFoods: [],
           globalFoods: []
         }))
       }
     }
   }, [record])
 
-  const loadUserFoods = async (category?: FoodCategory) => {
-    if (!user?.id) return
+  const loadFoods = async (category?: FoodCategory) => {
     const targetCategory = category || foodData.selectedCategory
     if (!targetCategory) return
     try {
-      const foods = await getFoodsByCategory(user.id, targetCategory)
-      setFoodData(prev => ({ ...prev, userFoods: foods }))
+      const foods = await getFoodsByCategory(targetCategory)
+      setFoodData(prev => ({ ...prev, availableFoods: foods }))
     } catch (error) {
       console.error("Error loading foods:", error)
     }
@@ -102,10 +99,10 @@ export function EditNutritionDialog({ record, isOpen, onClose, onSuccess }: Edit
   }
 
   useEffect(() => {
-    if (editMode === "food" && step === "select-food" && user?.id && foodData.selectedCategory) {
-      loadUserFoods()
+    if (editMode === "food" && step === "select-food" && foodData.selectedCategory) {
+      loadFoods()
     }
-  }, [editMode, step, user?.id, foodData.selectedCategory]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [editMode, step, foodData.selectedCategory]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (editMode === "food") {
@@ -168,10 +165,10 @@ export function EditNutritionDialog({ record, isOpen, onClose, onSuccess }: Edit
   }
 
   const handleGlobalFoodSelect = async (globalFood: GlobalFood) => {
-    if (!user?.id || !foodData.selectedCategory) return
+    if (!foodData.selectedCategory) return
     setIsLoading(true)
     try {
-      const food = await createFoodFromGlobal(user.id, globalFood.id)
+      const food = await createFoodFromGlobal(globalFood.id)
       setFoodData(prev => ({ ...prev, selectedFood: food }))
       setStep("edit")
     } catch (error) {
@@ -186,7 +183,7 @@ export function EditNutritionDialog({ record, isOpen, onClose, onSuccess }: Edit
       ...prev,
       selectedCategory: category,
       searchQuery: "",
-      userFoods: [],
+      availableFoods: [],
       globalFoods: []
     }))
     setStep("select-food")
@@ -463,11 +460,11 @@ export function EditNutritionDialog({ record, isOpen, onClose, onSuccess }: Edit
 
           <ScrollArea className="flex-1 min-h-0">
             <div className="space-y-3">
-              {foodData.userFoods.length > 0 && (
+              {foodData.availableFoods.length > 0 && (
                 <div>
-                  <Label className="text-sm font-medium">我的食物</Label>
+                  <Label className="text-sm font-medium">共享食物</Label>
                   <div className="space-y-2 mt-2">
-                    {foodData.userFoods.map((food) => (
+                    {foodData.availableFoods.map((food) => (
                       <div
                         key={food.id}
                         className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer"
@@ -519,7 +516,7 @@ export function EditNutritionDialog({ record, isOpen, onClose, onSuccess }: Edit
                 </div>
               )}
 
-              {foodData.searchQuery.length < 2 && foodData.userFoods.length === 0 && (
+              {foodData.searchQuery.length < 2 && foodData.availableFoods.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
                   請輸入至少 2 個字元來搜尋食物
                 </div>

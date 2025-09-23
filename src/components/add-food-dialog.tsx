@@ -29,7 +29,7 @@ export function AddFoodDialog({ category, isOpen, onClose, onSuccess }: AddFoodD
   const [selectedFood, setSelectedFood] = useState<UnifiedFood | null>(null)
 
   // 使用統一的搜尋 hook - 消除複雜邏輯
-  const { searchQuery, setSearchQuery, result, addGlobalFood } = useFoodSearch(user?.id, category)
+  const { searchQuery, setSearchQuery, result, addGlobalFood } = useFoodSearch(category)
 
   // 處理食物選擇 - 統一邏輯
   const handleFoodSelect = async (food: UnifiedFood) => {
@@ -71,7 +71,7 @@ export function AddFoodDialog({ category, isOpen, onClose, onSuccess }: AddFoodD
   }
 
   // 決定顯示的食物清單
-  const displayFoods = searchQuery.length >= 2 ? result.globalFoods : result.userFoods
+  const displayFoods = searchQuery.length >= 2 ? result.globalFoods : result.foods
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>

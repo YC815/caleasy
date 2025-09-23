@@ -66,7 +66,7 @@ export type UnifiedFood = {
 
 // 食物搜尋結果
 export type FoodSearchResult = {
-  userFoods: UnifiedFood[]
+  foods: UnifiedFood[]
   globalFoods: UnifiedFood[]
   isLoading: boolean
   error: string | null
