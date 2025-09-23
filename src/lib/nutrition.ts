@@ -16,7 +16,31 @@ export function calculateMacroRatios(nutrition: NutritionSummary): MacroRatio[] 
   const carbCalories = nutrition.carbs * 4
   const proteinCalories = nutrition.protein * 4
   const fatCalories = nutrition.fat * 9
-  const totalMacroCalories = carbCalories + proteinCalories + fatCalories || 1
+  const totalMacroCalories = carbCalories + proteinCalories + fatCalories
+
+  // 處理空資料情況
+  if (totalMacroCalories === 0) {
+    return [
+      {
+        name: "碳水化合物",
+        value: 0,
+        calories: 0,
+        color: "#3b82f6"
+      },
+      {
+        name: "蛋白質",
+        value: 0,
+        calories: 0,
+        color: "#1e40af"
+      },
+      {
+        name: "脂肪",
+        value: 0,
+        calories: 0,
+        color: "#60a5fa"
+      }
+    ]
+  }
 
   const carbPercent = (carbCalories / totalMacroCalories) * 100
   const proteinPercent = (proteinCalories / totalMacroCalories) * 100
@@ -32,7 +56,8 @@ export function calculateMacroRatios(nutrition: NutritionSummary): MacroRatio[] 
   const totalRounded = roundedPercentages.reduce((sum, p) => sum + p, 0)
   const remainingPercent = 100 - totalRounded
 
-  for (let i = 0; i < remainingPercent; i++) {
+  // 安全地分配剩餘百分比
+  for (let i = 0; i < remainingPercent && i < remainders.length; i++) {
     roundedPercentages[remainders[i].index]++
   }
 

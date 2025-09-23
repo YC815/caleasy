@@ -43,12 +43,18 @@ export function DashboardView({ userId }: DashboardViewProps) {
 
       const todayRecs = await getNutritionRecordsByDate(userId, today)
 
-      const todayNut = calculateNutrition(todayRecs)
+      const todayNut = calculateNutrition(todayRecs || [])
       const macroData = calculateMacroRatios(todayNut)
 
       setMacros(macroData)
     } catch (error) {
       console.error("Error loading daily data:", error)
+      // 設定預設的空狀態
+      setMacros([
+        { name: "碳水化合物", value: 0, calories: 0, color: "#3b82f6" },
+        { name: "蛋白質", value: 0, calories: 0, color: "#1e40af" },
+        { name: "脂肪", value: 0, calories: 0, color: "#60a5fa" }
+      ])
     }
   }
 
