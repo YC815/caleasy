@@ -32,26 +32,50 @@ console.log("[DB_INIT] 資料庫客戶端初始化:", {
 
 // 檢查必要的環境變數
 function validateEnvironment() {
-  const required = {
+  const required: Record<string, string | undefined> = {
     DATABASE_URL: process.env.DATABASE_URL,
-    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-    CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY
   }
 
-  const missing = Object.entries(required)
+  const optional: Record<string, string | undefined> = {
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+    CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    Object.assign(required, optional)
+  }
+
+  const missingRequired = Object.entries(required)
     .filter(([, value]) => !value)
     .map(([key]) => key)
 
-  if (missing.length > 0) {
+  if (missingRequired.length > 0) {
     console.error("[ENV_CHECK] 缺少必要環境變數:", {
-      missing,
+      missing: missingRequired,
       env: process.env.NODE_ENV,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     })
     return false
   }
 
-  console.log("[ENV_CHECK] 環境變數檢查通過")
+  const missingOptional = process.env.NODE_ENV === "production"
+    ? []
+    : Object.entries(optional)
+        .filter(([, value]) => !value)
+        .map(([key]) => key)
+
+  if (missingOptional.length > 0) {
+    console.warn("[ENV_CHECK] 選用環境變數未設定:", {
+      missing: missingOptional,
+      env: process.env.NODE_ENV,
+      timestamp: new Date().toISOString(),
+    })
+  }
+
+  console.log("[ENV_CHECK] 環境變數檢查通過", {
+    env: process.env.NODE_ENV,
+    timestamp: new Date().toISOString(),
+  })
   return true
 }
 

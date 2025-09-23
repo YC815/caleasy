@@ -23,7 +23,23 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY!;
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const appShell = (
+    <html lang="en">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        {children}
+      </body>
+    </html>
+  );
+
+  if (!publishableKey) {
+    const log = process.env.NODE_ENV === "production" ? console.error : console.warn;
+    log("[AUTH] Clerk publishable key 未設定，將以未保護模式啟動應用程式。", {
+      env: process.env.NODE_ENV,
+      timestamp: new Date().toISOString(),
+    });
+    return appShell;
+  }
 
   return (
     <ClerkProvider
@@ -33,13 +49,7 @@ export default function RootLayout({
       signInFallbackRedirectUrl="/"
       signUpFallbackRedirectUrl="/"
     >
-      <html lang="en">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
-          {children}
-        </body>
-      </html>
+      {appShell}
     </ClerkProvider>
   );
 }
