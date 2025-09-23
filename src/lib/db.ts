@@ -1,6 +1,9 @@
 import { PrismaClient } from "@prisma/client"
 
 function assertEnv(keys: string[]) {
+  if (process.env.SKIP_ENV_VALIDATION === 'true') {
+    return;
+  }
   const missing = keys.filter(k => !process.env[k]);
   if (missing.length) {
     throw new Error('[ENV_CHECK] Missing: ' + missing.join(', '));
