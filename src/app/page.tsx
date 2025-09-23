@@ -1,12 +1,13 @@
 import { DashboardView } from "@/components/dashboard-view"
 import { auth } from "@clerk/nextjs/server"
+import { redirect } from "next/navigation"
 
 
 export default async function Home() {
   const { userId } = await auth()
 
   if (!userId) {
-    throw new Error('User not authenticated')
+    redirect('/sign-in')
   }
 
   return <DashboardView userId={userId} />
