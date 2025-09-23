@@ -10,7 +10,7 @@ import { WeeklySummary } from "@/components/weekly-summary"
 import { Button } from "@/components/ui/button"
 import { UserButton } from "@clerk/nextjs"
 import { BarChart3, History, Calendar } from "lucide-react"
-import { getFoodRecordsByDate } from "@/actions/record-actions"
+import { getFoodRecordsByDate, getRecentFoodRecords } from "@/actions/record-actions"
 import { getOrCreateWeeklyStats, getDailyCaloriesForWeek } from "@/actions/weekly-stats-actions"
 import { calculateNutrition, calculateMacroRatios } from "@/lib/nutrition"
 import type { FoodRecordWithFood, NutritionSummary, MacroRatio, WeeklyStats } from "@/lib/types"
@@ -27,12 +27,13 @@ export function DashboardView({ userId }: DashboardViewProps) {
   const [timeFrame, setTimeFrame] = useState<TimeFrame>("daily")
   const [isLoading, setIsLoading] = useState(true)
 
-  const [todayRecords, setTodayRecords] = useState<FoodRecordWithFood[]>([])
+  const [historyRecords, setHistoryRecords] = useState<FoodRecordWithFood[]>([])
   const [todayNutrition, setTodayNutrition] = useState<NutritionSummary>({ calories: 0, protein: 0, carbs: 0, fat: 0 })
   const [yesterdayCalories, setYesterdayCalories] = useState(0)
   const [macros, setMacros] = useState<MacroRatio[]>([])
   const [weeklyStats, setWeeklyStats] = useState<WeeklyStats | null>(null)
   const [weeklyChart, setWeeklyChart] = useState<{ date: string; calories: number }[]>([])
+  const [lastWeekChart, setLastWeekChart] = useState<{ date: string; calories: number }[]>([])
 
   const targetCalories = 2000
 
@@ -51,7 +52,6 @@ export function DashboardView({ userId }: DashboardViewProps) {
       const yesterdayNut = calculateNutrition(yesterdayRecs)
       const macroData = calculateMacroRatios(todayNut)
 
-      setTodayRecords(todayRecs)
       setTodayNutrition(todayNut)
       setYesterdayCalories(yesterdayNut.calories)
       setMacros(macroData)
@@ -62,15 +62,30 @@ export function DashboardView({ userId }: DashboardViewProps) {
 
   const loadWeeklyData = async () => {
     try {
-      const [stats, chartData] = await Promise.all([
+      const now = new Date()
+      const lastWeek = new Date(now)
+      lastWeek.setDate(lastWeek.getDate() - 7)
+
+      const [stats, thisWeekData, lastWeekData] = await Promise.all([
         getOrCreateWeeklyStats(userId),
-        getDailyCaloriesForWeek(userId)
+        getDailyCaloriesForWeek(userId, now),
+        getDailyCaloriesForWeek(userId, lastWeek)
       ])
 
       setWeeklyStats(stats)
-      setWeeklyChart(chartData)
+      setWeeklyChart(thisWeekData)
+      setLastWeekChart(lastWeekData)
     } catch (error) {
       console.error("Error loading weekly data:", error)
+    }
+  }
+
+  const loadHistoryData = async () => {
+    try {
+      const records = await getRecentFoodRecords(userId, 50)
+      setHistoryRecords(records)
+    } catch (error) {
+      console.error("Error loading history data:", error)
     }
   }
 
@@ -89,10 +104,12 @@ export function DashboardView({ userId }: DashboardViewProps) {
 
   useEffect(() => {
     loadData()
+    loadHistoryData()
   }, [timeFrame, userId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAddFoodSuccess = () => {
     loadData()
+    loadHistoryData()
   }
 
   if (isLoading) {
@@ -175,8 +192,6 @@ export function DashboardView({ userId }: DashboardViewProps) {
                 />
 
                 <NutritionChart macros={macros} />
-
-                <FoodList records={todayRecords} />
               </>
             ) : (
               <>
@@ -188,13 +203,14 @@ export function DashboardView({ userId }: DashboardViewProps) {
                 )}
 
                 <WeeklyChart
-                  data={weeklyChart}
+                  thisWeekData={weeklyChart}
+                  lastWeekData={lastWeekChart}
                   targetCalories={targetCalories}
                 />
 
                 {weeklyStats && (
                   <div className="text-center text-sm text-muted-foreground">
-                    點擊「每日」查看詳細飲食記錄
+                    點擊「記錄歷史」查看詳細飲食記錄
                   </div>
                 )}
               </>
@@ -203,9 +219,7 @@ export function DashboardView({ userId }: DashboardViewProps) {
         )}
 
         {viewMode === "history" && (
-          <div className="text-center py-8 text-muted-foreground">
-            歷史記錄功能開發中...
-          </div>
+          <FoodList records={historyRecords} showGroupedByDate={true} />
         )}
       </div>
 

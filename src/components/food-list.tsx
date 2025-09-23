@@ -9,6 +9,7 @@ import { EditFoodDialog } from "./edit-food-dialog"
 
 type FoodListProps = {
   records: FoodRecordWithFood[]
+  showGroupedByDate?: boolean
 }
 
 function formatTime(date: Date): string {
@@ -16,6 +17,35 @@ function formatTime(date: Date): string {
     hour: "2-digit",
     minute: "2-digit"
   })
+}
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString("zh-TW", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "long"
+  })
+}
+
+
+function groupRecordsByDate(records: FoodRecordWithFood[]): { date: string; records: FoodRecordWithFood[] }[] {
+  const groups: { [key: string]: FoodRecordWithFood[] } = {}
+
+  records.forEach(record => {
+    const dateKey = new Date(record.recordedAt).toDateString()
+    if (!groups[dateKey]) {
+      groups[dateKey] = []
+    }
+    groups[dateKey].push(record)
+  })
+
+  return Object.entries(groups)
+    .map(([dateKey, records]) => ({
+      date: formatDate(new Date(dateKey)),
+      records: records.sort((a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime())
+    }))
+    .sort((a, b) => new Date(b.records[0].recordedAt).getTime() - new Date(a.records[0].recordedAt).getTime())
 }
 
 function calculateRecordNutrition(record: FoodRecordWithFood) {
@@ -28,7 +58,7 @@ function calculateRecordNutrition(record: FoodRecordWithFood) {
   }
 }
 
-export function FoodList({ records }: FoodListProps) {
+export function FoodList({ records, showGroupedByDate = false }: FoodListProps) {
   const [editRecord, setEditRecord] = useState<FoodRecordWithFood | null>(null)
   const [deleteRecord, setDeleteRecord] = useState<FoodRecordWithFood | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -51,7 +81,7 @@ export function FoodList({ records }: FoodListProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">今日飲食記錄</CardTitle>
+          <CardTitle className="text-lg">{showGroupedByDate ? "飲食記錄歷史" : "今日飲食記錄"}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center text-muted-foreground py-8">
@@ -62,6 +92,68 @@ export function FoodList({ records }: FoodListProps) {
     )
   }
 
+  if (showGroupedByDate) {
+    const groupedRecords = groupRecordsByDate(records)
+
+    return (
+      <div className="space-y-4">
+        {groupedRecords.map((group, groupIndex) => (
+          <Card key={groupIndex}>
+            <CardHeader>
+              <CardTitle className="text-lg">{group.date}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {group.records.map((record) => {
+                const nutrition = calculateRecordNutrition(record)
+
+                return (
+                  <div
+                    key={record.id}
+                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium">{record.food.name}</span>
+                        <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                          {record.food.category}
+                        </span>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {record.amount}g • {nutrition.calories} 大卡 •{" "}
+                        {formatTime(new Date(record.recordedAt))}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        蛋白質 {nutrition.protein}g • 碳水 {nutrition.carbs}g • 脂肪{" "}
+                        {nutrition.fat}g
+                      </div>
+                    </div>
+                    <div className="flex gap-1 ml-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0"
+                        onClick={() => setEditRecord(record)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        onClick={() => setDeleteRecord(record)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )
+              })}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <Card>

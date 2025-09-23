@@ -91,3 +91,19 @@ export async function updateFoodRecord(
   revalidatePath("/")
   return record
 }
+
+export async function getRecentFoodRecords(
+  userId: string,
+  limit: number = 50
+): Promise<FoodRecordWithFood[]> {
+  return await db.foodRecord.findMany({
+    where: {
+      userId
+    },
+    include: {
+      food: true
+    },
+    orderBy: { recordedAt: "desc" },
+    take: limit
+  })
+}

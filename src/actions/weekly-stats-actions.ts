@@ -172,11 +172,19 @@ export async function getDailyCaloriesForWeek(userId: string, date: Date = new D
     const currentDate = new Date(weekStart)
     currentDate.setDate(currentDate.getDate() + i)
 
-    const dayRecords = await getFoodRecordsByDateRange(userId, currentDate, currentDate)
+    // Set to start of day for proper date range query
+    const dayStart = new Date(currentDate)
+    dayStart.setHours(0, 0, 0, 0)
+
+    // Set to end of day
+    const dayEnd = new Date(currentDate)
+    dayEnd.setHours(23, 59, 59, 999)
+
+    const dayRecords = await getFoodRecordsByDateRange(userId, dayStart, dayEnd)
     const dayNutrition = calculateNutrition(dayRecords)
 
     dailyData.push({
-      date: currentDate.toLocaleDateString("zh-TW", { weekday: "short" }),
+      date: currentDate.toISOString().split('T')[0], // YYYY-MM-DD format
       calories: dayNutrition.calories
     })
   }
