@@ -1,5 +1,14 @@
 import { PrismaClient } from "@prisma/client"
 
+function assertEnv(keys: string[]) {
+  const missing = keys.filter(k => !process.env[k]);
+  if (missing.length) {
+    throw new Error('[ENV_CHECK] Missing: ' + missing.join(', '));
+  }
+}
+
+assertEnv(['DATABASE_URL', 'CLERK_SECRET_KEY', 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY']);
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
@@ -11,96 +20,3 @@ export const db =
   })
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db
-
-// 詳細的資料庫初始化日誌
-console.log("[DB_INIT] 資料庫客戶端初始化:", {
-  hasClient: !!db,
-  hasNutritionRecord: !!db?.nutritionRecord,
-  hasFood: !!db?.food,
-  hasUser: !!db?.user,
-  hasGlobalFood: !!db?.globalFood,
-  hasWeeklyStats: !!db?.weeklyStats,
-  clientKeys: Object.keys(db || {}),
-  env: process.env.NODE_ENV,
-  databaseUrl: process.env.DATABASE_URL ? '已設定' : '未設定',
-  clerkPublishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ? '已設定' : '未設定',
-  clerkSecretKey: process.env.CLERK_SECRET_KEY ? '已設定' : '未設定',
-  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  utcOffset: new Date().getTimezoneOffset(),
-  timestamp: new Date().toISOString()
-})
-
-// 檢查必要的環境變數
-function validateEnvironment() {
-  const required: Record<string, string | undefined> = {
-    DATABASE_URL: process.env.DATABASE_URL,
-  }
-
-  const optional: Record<string, string | undefined> = {
-    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-    CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
-  }
-
-  if (process.env.NODE_ENV === "production") {
-    Object.assign(required, optional)
-  }
-
-  const missingRequired = Object.entries(required)
-    .filter(([, value]) => !value)
-    .map(([key]) => key)
-
-  if (missingRequired.length > 0) {
-    console.error("[ENV_CHECK] 缺少必要環境變數:", {
-      missing: missingRequired,
-      env: process.env.NODE_ENV,
-      timestamp: new Date().toISOString(),
-    })
-    return false
-  }
-
-  const missingOptional = process.env.NODE_ENV === "production"
-    ? []
-    : Object.entries(optional)
-        .filter(([, value]) => !value)
-        .map(([key]) => key)
-
-  if (missingOptional.length > 0) {
-    console.warn("[ENV_CHECK] 選用環境變數未設定:", {
-      missing: missingOptional,
-      env: process.env.NODE_ENV,
-      timestamp: new Date().toISOString(),
-    })
-  }
-
-  console.log("[ENV_CHECK] 環境變數檢查通過", {
-    env: process.env.NODE_ENV,
-    timestamp: new Date().toISOString(),
-  })
-  return true
-}
-
-// 測試資料庫連接
-async function testDatabaseConnection() {
-  try {
-    console.log("[DB_TEST] 測試資料庫連接...")
-    await db.$queryRaw`SELECT 1`
-    console.log("[DB_TEST] 資料庫連接成功")
-  } catch (error) {
-    console.error("[DB_TEST] 資料庫連接失敗:", {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      databaseUrl: process.env.DATABASE_URL ? 'SET' : 'MISSING',
-      timestamp: new Date().toISOString()
-    })
-  }
-}
-
-// 在啟動時先檢查環境變數，再決定是否進行資料庫測試
-const isEnvironmentValid = validateEnvironment()
-
-if (isEnvironmentValid) {
-  // 在所有環境中進行連接測試
-  void testDatabaseConnection()
-} else {
-  console.warn("[STARTUP] 略過資料庫連接測試：環境變數驗證未通過")
-}
