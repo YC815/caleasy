@@ -21,8 +21,6 @@ export async function createNutritionRecord(
         category: String(data.category),
         calories: data.calories,
         protein: data.protein,
-        carbs: data.carbs,
-        fat: data.fat,
         sourceType: data.sourceType,
         foodId: data.foodId || null,
         amount: data.amount || null,
@@ -50,7 +48,7 @@ export async function createFoodBasedRecord(
 // 向後相容：直接營養記錄創建（重導向到統一函數）
 export async function createDirectNutritionRecord(
   userId: string,
-  data: { name?: string; category: string; calories: number; protein: number; carbs: number; fat: number },
+  data: { name?: string; category: string; calories: number; protein: number },
   recordedAt?: Date
 ): Promise<NutritionRecord> {
   const nutritionInput: NutritionInput = {
@@ -58,8 +56,6 @@ export async function createDirectNutritionRecord(
     category: String(data.category),
     calories: data.calories,
     protein: data.protein,
-    carbs: data.carbs,
-    fat: data.fat,
     sourceType: "manual"
   }
 
@@ -177,9 +173,7 @@ export async function updateNutritionRecord(
       updatedFields: Object.keys(data),
       newNutrition: {
         calories: record.calories,
-        protein: record.protein,
-        carbs: record.carbs,
-        fat: record.fat
+        protein: record.protein
       },
       timestamp: new Date().toISOString()
     })
@@ -269,8 +263,6 @@ export async function createNutritionRecordFromFood(
       category: food.category,
       calories: food.caloriesPer100g * factor,
       protein: food.proteinPer100g * factor,
-      carbs: food.carbsPer100g * factor,
-      fat: food.fatPer100g * factor,
       sourceType: "food",
       foodId: food.id,
       amount: amount

@@ -26,9 +26,7 @@ export function AddNutritionDialog({ isOpen, onClose, onSuccess }: AddNutritionD
   const [formData, setFormData] = useState({
     name: "",
     calories: "",
-    protein: "",
-    carbs: "",
-    fat: ""
+    protein: ""
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,17 +39,13 @@ export function AddNutritionDialog({ isOpen, onClose, onSuccess }: AddNutritionD
         name: formData.name || undefined,
         category: "其他",
         calories: parseFloat(formData.calories) || 0,
-        protein: parseFloat(formData.protein) || 0,
-        carbs: parseFloat(formData.carbs) || 0,
-        fat: parseFloat(formData.fat) || 0
+        protein: parseFloat(formData.protein) || 0
       })
 
       setFormData({
         name: "",
         calories: "",
-        protein: "",
-        carbs: "",
-        fat: ""
+        protein: ""
       })
       onClose()
       onSuccess?.()
@@ -121,35 +115,6 @@ export function AddNutritionDialog({ isOpen, onClose, onSuccess }: AddNutritionD
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="carbs">碳水化合物 (g)</Label>
-              <Input
-                id="carbs"
-                type="number"
-                step="0.1"
-                min="0"
-                placeholder="0"
-                value={formData.carbs}
-                onChange={handleInputChange("carbs")}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="fat">脂肪 (g)</Label>
-              <Input
-                id="fat"
-                type="number"
-                step="0.1"
-                min="0"
-                placeholder="0"
-                value={formData.fat}
-                onChange={handleInputChange("fat")}
-                required
-              />
-            </div>
-          </div>
 
           <div className="flex gap-3 pt-4">
             <Button

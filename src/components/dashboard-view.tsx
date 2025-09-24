@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { NutritionChart } from "@/components/nutrition-chart"
+import { NutritionProgress } from "@/components/nutrition-progress"
 import { NutritionList } from "@/components/nutrition-list"
 import { AddRecordDialog } from "@/components/add-record-dialog"
 import { WeeklyChart } from "@/components/weekly-chart"
@@ -13,8 +13,9 @@ import { UserButton } from "@clerk/nextjs"
 import { BarChart3, History, Calendar } from "lucide-react"
 import { getNutritionRecordsByDate, getRecentNutritionRecords } from "@/actions/record-actions"
 import { getOrCreateWeeklyStats, getDailyCaloriesForWeek } from "@/actions/weekly-stats-actions"
-import { calculateNutrition, calculateMacroRatios } from "@/lib/nutrition"
-import type { NutritionRecordWithFood, MacroRatio, WeeklyStats } from "@/lib/types"
+import { getUserGoals } from "@/actions/user-actions"
+import { calculateNutrition, calculateCalorieProgress, calculateProteinProgress } from "@/lib/nutrition"
+import type { NutritionRecordWithFood, WeeklyStats, CalorieProgressData, ProteinProgressData } from "@/lib/types"
 
 type ViewMode = "overview" | "history"
 type TimeFrame = "daily" | "weekly"
@@ -29,7 +30,17 @@ export function DashboardView({ userId }: DashboardViewProps) {
   const [isLoading, setIsLoading] = useState(true)
 
   const [historyRecords, setHistoryRecords] = useState<NutritionRecordWithFood[]>([])
-  const [macros, setMacros] = useState<MacroRatio[]>([])
+  const [calorieProgress, setCalorieProgress] = useState<CalorieProgressData>({
+    consumed: 0,
+    goal: 1750,
+    remaining: 1750,
+    isOverGoal: false
+  })
+  const [proteinProgress, setProteinProgress] = useState<ProteinProgressData>({
+    consumed: 0,
+    goal: 100,
+    isOverGoal: false
+  })
   const [weeklyStats, setWeeklyStats] = useState<WeeklyStats | null>(null)
   const [weeklyChart, setWeeklyChart] = useState<{ date: string; calories: number }[]>([])
   const [lastWeekChart, setLastWeekChart] = useState<{ date: string; calories: number }[]>([])
@@ -37,20 +48,32 @@ export function DashboardView({ userId }: DashboardViewProps) {
 
   const loadDailyData = async () => {
     try {
-      const today = new Date()
-      const todayRecs = await getNutritionRecordsByDate(userId, today)
-      const todayNut = calculateNutrition(todayRecs || [])
-      const macroData = calculateMacroRatios(todayNut)
+      const [todayRecs, userGoals] = await Promise.all([
+        getNutritionRecordsByDate(userId, new Date()),
+        getUserGoals(userId)
+      ])
 
-      setMacros(macroData)
+      const todayNut = calculateNutrition(todayRecs || [])
+
+      const calorieData = calculateCalorieProgress(todayNut.calories, userGoals.dailyCalorieGoal)
+      const proteinData = calculateProteinProgress(todayNut.protein, userGoals.dailyProteinGoal)
+
+      setCalorieProgress(calorieData)
+      setProteinProgress(proteinData)
     } catch (error) {
       console.error("Failed to load daily data:", error)
       // 設定預設的空狀態
-      setMacros([
-        { name: "碳水化合物", value: 0, calories: 0, color: "#3b82f6" },
-        { name: "蛋白質", value: 0, calories: 0, color: "#1e40af" },
-        { name: "脂肪", value: 0, calories: 0, color: "#60a5fa" }
-      ])
+      setCalorieProgress({
+        consumed: 0,
+        goal: 1750,
+        remaining: 1750,
+        isOverGoal: false
+      })
+      setProteinProgress({
+        consumed: 0,
+        goal: 100,
+        isOverGoal: false
+      })
     }
   }
 
@@ -251,7 +274,11 @@ export function DashboardView({ userId }: DashboardViewProps) {
 
             {timeFrame === "daily" ? (
               <>
-                <NutritionChart macros={macros} />
+                <NutritionProgress
+                  calorieData={calorieProgress}
+                  proteinData={proteinProgress}
+                  onGoalsUpdate={loadData}
+                />
               </>
             ) : (
               <>

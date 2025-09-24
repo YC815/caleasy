@@ -8,65 +8,50 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-
-  records     NutritionRecord[]
-  weeklyStats WeeklyStats[]
+  id               String            @id @default(cuid())
+  email            String            @unique
+  name             String?
+  dailyCalorieGoal Float             @default(1750)
+  dailyProteinGoal Float             @default(100)
+  createdAt        DateTime          @default(now())
+  records          NutritionRecord[]
+  weeklyStats      WeeklyStats[]
 }
-
 
 model NutritionRecord {
-  id          String   @id @default(cuid())
-  name        String   // 總是有名稱
-  category    String   // "蛋白質", "蔬果與纖維", "碳水化合物", "其他"
-
-  // 營養素數值（總是直接儲存，已計算完成）
-  calories    Float
-  protein     Float    // in grams
-  carbs       Float    // in grams
-  fat         Float    // in grams
-
-  // 來源資訊（不影響計算邏輯）
-  sourceType  String   // "food" | "manual"
-  foodId      String?  // 如果來自食物資料庫
-  amount      Float?   // 如果來自食物資料庫，記錄用量
-
-  recordedAt  DateTime @default(now())
-
-  userId      String
-  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  food        Food? @relation(fields: [foodId], references: [id], onDelete: SetNull)
+  id         String   @id @default(cuid())
+  name       String
+  category   String
+  calories   Float
+  protein    Float
+  sourceType String
+  foodId     String?
+  amount     Float?
+  recordedAt DateTime @default(now())
+  userId     String
+  food       Food?    @relation(fields: [foodId], references: [id])
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-
 model WeeklyStats {
-  id                String @id @default(cuid())
-  weekStartDate     DateTime // Monday of the week
-  totalCalories     Float
-  avgDailyCalories  Float
-  totalProtein      Float
-  totalCarbs        Float
-  totalFat          Float
-  avgProtein        Float
-  avgCarbs          Float
-  avgFat            Float
-  recordsCount      Int
-  actualDays        Int      // 實際有記錄的天數
-
-  userId            String
-  user              User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id               String   @id @default(cuid())
+  weekStartDate    DateTime
+  totalCalories    Float
+  avgDailyCalories Float
+  totalProtein     Float
+  avgProtein       Float
+  recordsCount     Int
+  actualDays       Int
+  userId           String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, weekStartDate])
 }
 
 model Food {
-  id              String    @id @default(cuid())
+  id              String            @id @default(cuid())
   name            String
   category        String
   brand           String?
@@ -74,14 +59,11 @@ model Food {
   servingSize     Float?
   caloriesPer100g Int
   proteinPer100g  Float
-  carbsPer100g    Float
-  fatPer100g      Float
-  isGlobal        Boolean   @default(true)
-  isPublished     Boolean   @default(true)
-  createdBy       String?   // 用戶自建食物時的創建者
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @default(now()) @updatedAt
-
+  isGlobal        Boolean           @default(true)
+  isPublished     Boolean           @default(true)
+  createdBy       String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @default(now()) @updatedAt
   records         NutritionRecord[]
 
   @@unique([name, category, brand])

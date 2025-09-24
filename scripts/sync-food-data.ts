@@ -10,8 +10,6 @@ interface FoodData {
   category: string
   calories: number
   protein: number
-  carbs: number
-  fat: number
 }
 
 function parseCsvLine(line: string): string[] {
@@ -19,12 +17,12 @@ function parseCsvLine(line: string): string[] {
 }
 
 function parseFood(row: string[]): FoodData | null {
-  if (row.length !== 7) {
+  if (row.length !== 5) {
     console.warn(`Skip invalid row: ${row.join(',')}`)
     return null
   }
 
-  const [id, name, category, calories, protein, carbs, fat] = row
+  const [id, name, category, calories, protein] = row
 
   if (!id || id === '000000' || !name || !category) {
     return null
@@ -35,9 +33,7 @@ function parseFood(row: string[]): FoodData | null {
     name,
     category,
     calories: parseInt(calories),
-    protein: parseFloat(protein),
-    carbs: parseFloat(carbs),
-    fat: parseFloat(fat)
+    protein: parseFloat(protein)
   }
 }
 
@@ -88,8 +84,6 @@ async function syncFoodData() {
               category: food.category,
               caloriesPer100g: food.calories,
               proteinPer100g: food.protein,
-              carbsPer100g: food.carbs,
-              fatPer100g: food.fat,
               isPublished: true
             },
             create: {
@@ -98,8 +92,6 @@ async function syncFoodData() {
               category: food.category,
               caloriesPer100g: food.calories,
               proteinPer100g: food.protein,
-              carbsPer100g: food.carbs,
-              fatPer100g: food.fat,
               isPublished: true
             }
           })

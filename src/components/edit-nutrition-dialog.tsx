@@ -32,9 +32,7 @@ export function EditNutritionDialog({ record, isOpen, onClose, onSuccess }: Edit
   const [formData, setFormData] = useState({
     name: "",
     calories: "",
-    protein: "",
-    carbs: "",
-    fat: ""
+    protein: ""
   })
 
   const [foodData, setFoodData] = useState({
@@ -56,9 +54,7 @@ export function EditNutritionDialog({ record, isOpen, onClose, onSuccess }: Edit
         setFormData({
           name: record.name || "",
           calories: record.calories.toString(),
-          protein: record.protein.toString(),
-          carbs: record.carbs.toString(),
-          fat: record.fat.toString()
+          protein: record.protein.toString()
         })
       } else {
         setFoodData(prev => ({
@@ -118,9 +114,7 @@ export function EditNutritionDialog({ record, isOpen, onClose, onSuccess }: Edit
       await updateNutritionRecord(record.id, {
         name: formData.name || undefined,
         calories: parseFloat(formData.calories) || 0,
-        protein: parseFloat(formData.protein) || 0,
-        carbs: parseFloat(formData.carbs) || 0,
-        fat: parseFloat(formData.fat) || 0
+        protein: parseFloat(formData.protein) || 0
       })
 
       onSuccess?.()
@@ -141,15 +135,11 @@ export function EditNutritionDialog({ record, isOpen, onClose, onSuccess }: Edit
       const factor = parseFloat(foodData.amount) / 100
       const calories = foodData.selectedFood.caloriesPer100g * factor
       const protein = foodData.selectedFood.proteinPer100g * factor
-      const carbs = foodData.selectedFood.carbsPer100g * factor
-      const fat = foodData.selectedFood.fatPer100g * factor
 
       await updateNutritionRecord(record.id, {
         name: foodData.selectedFood.name,
         calories,
         protein,
-        carbs,
-        fat,
         amount: parseFloat(foodData.amount),
         foodId: foodData.selectedFood.id
       })
@@ -255,33 +245,6 @@ export function EditNutritionDialog({ record, isOpen, onClose, onSuccess }: Edit
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-carbs">碳水化合物 (g)</Label>
-                <Input
-                  id="edit-carbs"
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  value={formData.carbs}
-                  onChange={handleInputChange("carbs")}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-fat">脂肪 (g)</Label>
-                <Input
-                  id="edit-fat"
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  value={formData.fat}
-                  onChange={handleInputChange("fat")}
-                  required
-                />
-              </div>
-            </div>
 
             <div className="flex gap-3 pt-4">
               <Button
@@ -341,8 +304,6 @@ export function EditNutritionDialog({ record, isOpen, onClose, onSuccess }: Edit
                   <div className="text-xs text-muted-foreground space-y-1">
                     <div>熱量：{Math.round(foodData.selectedFood.caloriesPer100g * parseFloat(foodData.amount) / 100)} 大卡</div>
                     <div>蛋白質：{Math.round(foodData.selectedFood.proteinPer100g * parseFloat(foodData.amount) / 100 * 10) / 10}g</div>
-                    <div>碳水：{Math.round(foodData.selectedFood.carbsPer100g * parseFloat(foodData.amount) / 100 * 10) / 10}g</div>
-                    <div>脂肪：{Math.round(foodData.selectedFood.fatPer100g * parseFloat(foodData.amount) / 100 * 10) / 10}g</div>
                   </div>
                 </div>
               )}

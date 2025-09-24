@@ -16,8 +16,6 @@ export type NutritionInput = {
   category: string
   calories: number
   protein: number
-  carbs: number
-  fat: number
   sourceType: "food" | "manual"
   foodId?: string
   amount?: number
@@ -26,8 +24,6 @@ export type NutritionInput = {
 export type NutritionSummary = {
   calories: number
   protein: number
-  carbs: number
-  fat: number
 }
 
 export type MacroRatio = {
@@ -55,4 +51,19 @@ export type FoodSearchResult = {
   foods: Food[]
   isLoading: boolean
   error: string | null
+}
+
+// Progress bar data types
+export type CalorieProgressData = {
+  consumed: number
+  goal: number
+  remaining: number
+  isOverGoal: boolean
+}
+
+export type ProteinProgressData = {
+  consumed: number
+  goal: number
+  isOverGoal: boolean
+  overAmount?: number
 }

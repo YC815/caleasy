@@ -1,32 +1,22 @@
-import type { NutritionRecord, NutritionRecordWithFood, NutritionSummary, MacroRatio } from "./types"
+import type { NutritionRecord, NutritionRecordWithFood, NutritionSummary, MacroRatio, CalorieProgressData, ProteinProgressData } from "./types"
 
 export function calculateNutrition(records: NutritionRecord[] | NutritionRecordWithFood[]): NutritionSummary {
   return records.reduce(
     (total, record) => ({
       calories: total.calories + record.calories,
-      protein: total.protein + record.protein,
-      carbs: total.carbs + record.carbs,
-      fat: total.fat + record.fat
+      protein: total.protein + record.protein
     }),
-    { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    { calories: 0, protein: 0 }
   )
 }
 
 export function calculateMacroRatios(nutrition: NutritionSummary): MacroRatio[] {
-  const carbCalories = nutrition.carbs * 4
   const proteinCalories = nutrition.protein * 4
-  const fatCalories = nutrition.fat * 9
-  const totalMacroCalories = carbCalories + proteinCalories + fatCalories
+  const otherCalories = nutrition.calories - proteinCalories
 
   // 處理空資料情況
-  if (totalMacroCalories === 0) {
+  if (nutrition.calories === 0) {
     return [
-      {
-        name: "碳水化合物",
-        value: 0,
-        calories: 0,
-        color: "#3b82f6"
-      },
       {
         name: "蛋白質",
         value: 0,
@@ -34,7 +24,7 @@ export function calculateMacroRatios(nutrition: NutritionSummary): MacroRatio[] 
         color: "#1e40af"
       },
       {
-        name: "脂肪",
+        name: "其他",
         value: 0,
         calories: 0,
         color: "#60a5fa"
@@ -42,42 +32,20 @@ export function calculateMacroRatios(nutrition: NutritionSummary): MacroRatio[] 
     ]
   }
 
-  const carbPercent = (carbCalories / totalMacroCalories) * 100
-  const proteinPercent = (proteinCalories / totalMacroCalories) * 100
-  const fatPercent = (fatCalories / totalMacroCalories) * 100
-
-  // 使用最大餘數法確保總和為100%
-  const percentages = [carbPercent, proteinPercent, fatPercent]
-  const roundedPercentages = percentages.map(p => Math.floor(p))
-  const remainders = percentages.map((p, i) => ({ index: i, remainder: p - roundedPercentages[i] }))
-
-  // 按餘數大小排序，將剩餘百分比分配給餘數最大的項目
-  remainders.sort((a, b) => b.remainder - a.remainder)
-  const totalRounded = roundedPercentages.reduce((sum, p) => sum + p, 0)
-  const remainingPercent = 100 - totalRounded
-
-  // 安全地分配剩餘百分比
-  for (let i = 0; i < remainingPercent && i < remainders.length; i++) {
-    roundedPercentages[remainders[i].index]++
-  }
+  const proteinPercent = Math.round((proteinCalories / nutrition.calories) * 100)
+  const otherPercent = 100 - proteinPercent
 
   return [
     {
-      name: "碳水化合物",
-      value: roundedPercentages[0],
-      calories: Math.round(carbCalories),
-      color: "#3b82f6"
-    },
-    {
       name: "蛋白質",
-      value: roundedPercentages[1],
+      value: proteinPercent,
       calories: Math.round(proteinCalories),
       color: "#1e40af"
     },
     {
-      name: "脂肪",
-      value: roundedPercentages[2],
-      calories: Math.round(fatCalories),
+      name: "其他",
+      value: otherPercent,
+      calories: Math.round(otherCalories),
       color: "#60a5fa"
     }
   ]
@@ -98,4 +66,28 @@ export function calculateCalorieDifference(current: number, previous: number): {
 export function isWithinCalorieGoal(current: number, target: number, tolerance = 0.1): boolean {
   const variance = Math.abs(current - target) / target
   return variance <= tolerance
+}
+
+export function calculateCalorieProgress(consumed: number, goal: number): CalorieProgressData {
+  const remaining = goal - consumed
+  const isOverGoal = consumed > goal
+
+  return {
+    consumed,
+    goal,
+    remaining: isOverGoal ? Math.abs(remaining) : remaining,
+    isOverGoal,
+  }
+}
+
+export function calculateProteinProgress(consumed: number, goal: number): ProteinProgressData {
+  const isOverGoal = consumed > goal
+  const overAmount = isOverGoal ? Math.round(consumed - goal) : undefined
+
+  return {
+    consumed,
+    goal,
+    isOverGoal,
+    overAmount,
+  }
 }

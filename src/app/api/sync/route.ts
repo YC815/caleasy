@@ -74,8 +74,6 @@ export async function POST(req: NextRequest) {
             servingSize: food.servingSize,
             caloriesPer100g: 0,
             proteinPer100g: 0,
-            carbsPer100g: 0,
-            fatPer100g: 0,
             isPublished: food.isPublished,
             updatedAt: new Date(),
           },
@@ -88,8 +86,6 @@ export async function POST(req: NextRequest) {
             servingSize: food.servingSize,
             caloriesPer100g: 0,
             proteinPer100g: 0,
-            carbsPer100g: 0,
-            fatPer100g: 0,
             isPublished: food.isPublished,
           },
         })

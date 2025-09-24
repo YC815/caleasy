@@ -10,8 +10,6 @@ export async function createFood(data: {
   category: string
   caloriesPer100g: number
   proteinPer100g: number
-  carbsPer100g: number
-  fatPer100g: number
   brand?: string
   servingUnit?: string
   servingSize?: number
@@ -32,8 +30,6 @@ export async function createFood(data: {
         category: data.category,
         caloriesPer100g: data.caloriesPer100g,
         proteinPer100g: data.proteinPer100g,
-        carbsPer100g: data.carbsPer100g,
-        fatPer100g: data.fatPer100g,
         brand: data.brand,
         servingUnit: data.servingUnit,
         servingSize: data.servingSize,

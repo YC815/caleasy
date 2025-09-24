@@ -114,9 +114,7 @@ export function NutritionList({ records, showGroupedByDate = false, onRecordChan
                       {formatTime(new Date(record.recordedAt))}
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
-                      蛋白質 {Math.round(record.protein * 10) / 10}g •
-                      碳水 {Math.round(record.carbs * 10) / 10}g •
-                      脂肪 {Math.round(record.fat * 10) / 10}g
+                      蛋白質 {Math.round(record.protein * 10) / 10}g
                     </div>
                   </div>
                   <div className="flex gap-1 ml-2">
@@ -206,9 +204,7 @@ export function NutritionList({ records, showGroupedByDate = false, onRecordChan
                 {formatTime(new Date(record.recordedAt))}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                蛋白質 {Math.round(record.protein * 10) / 10}g •
-                碳水 {Math.round(record.carbs * 10) / 10}g •
-                脂肪 {Math.round(record.fat * 10) / 10}g
+                蛋白質 {Math.round(record.protein * 10) / 10}g
               </div>
             </div>
             <div className="flex gap-1 ml-2">
