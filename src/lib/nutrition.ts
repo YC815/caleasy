@@ -91,3 +91,10 @@ export function calculateProteinProgress(consumed: number, goal: number): Protei
     overAmount,
   }
 }
+
+export function formatNutritionValue(value: number): string {
+  // 四捨五入到小數點一位
+  const rounded = Math.round(value * 10) / 10
+  // 如果是整數（小數部分為0），就顯示整數
+  return rounded % 1 === 0 ? rounded.toString() : rounded.toFixed(1)
+}

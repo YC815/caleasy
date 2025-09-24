@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { GoalsSettingDialog } from "@/components/goals-setting-dialog"
 import { Flame, Zap } from "lucide-react"
+import { formatNutritionValue } from "@/lib/nutrition"
 import type { CalorieProgressData, ProteinProgressData } from "@/lib/types"
 
 type NutritionProgressProps = {
@@ -40,11 +41,11 @@ export function NutritionProgress({ calorieData, proteinData, onGoalsUpdate }: N
             <div className="text-right">
               {calorieData.isOverGoal ? (
                 <span className="text-lg font-bold text-red-500">
-                  超標 {Math.abs(calorieData.remaining)} kcal
+                  超標 {formatNutritionValue(Math.abs(calorieData.remaining))} kcal
                 </span>
               ) : (
                 <span className="text-lg font-bold text-green-600">
-                  剩餘 {calorieData.remaining} kcal
+                  剩餘 {formatNutritionValue(calorieData.remaining)} kcal
                 </span>
               )}
             </div>
@@ -56,7 +57,7 @@ export function NutritionProgress({ calorieData, proteinData, onGoalsUpdate }: N
           />
 
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{calorieData.consumed} / {calorieData.goal} kcal</span>
+            <span>{formatNutritionValue(calorieData.consumed)} / {calorieData.goal} kcal</span>
             <span>{calorieData.isOverGoal ? '超標' : `剩餘 ${Math.round(caloriePercentage)}%`}</span>
           </div>
         </div>
@@ -71,11 +72,11 @@ export function NutritionProgress({ calorieData, proteinData, onGoalsUpdate }: N
             <div className="text-right">
               {proteinData.isOverGoal ? (
                 <span className="text-lg font-bold text-green-500">
-                  多攝取 {proteinData.overAmount}g 蛋白質
+                  多攝取 {proteinData.overAmount ? formatNutritionValue(proteinData.overAmount) : 0}g 蛋白質
                 </span>
               ) : (
                 <span className="text-lg font-bold text-blue-600">
-                  {Math.round(proteinData.consumed)} / {proteinData.goal}g
+                  {formatNutritionValue(proteinData.consumed)} / {proteinData.goal}g
                 </span>
               )}
             </div>
@@ -87,7 +88,7 @@ export function NutritionProgress({ calorieData, proteinData, onGoalsUpdate }: N
           />
 
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{Math.round(proteinData.consumed)} / {proteinData.goal}g</span>
+            <span>{formatNutritionValue(proteinData.consumed)} / {proteinData.goal}g</span>
             <span>{Math.round(proteinPercentage)}%</span>
           </div>
         </div>
