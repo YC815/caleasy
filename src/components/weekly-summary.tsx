@@ -41,13 +41,13 @@ export function WeeklySummary({ weeklyStats }: WeeklySummaryProps) {
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center space-y-1">
                 <div className="text-2xl font-bold text-primary">
-                  {Math.round(weeklyStats.avgDailyCalories)}
+                  {weeklyStats.avgDailyCalories.toFixed(0)}
                 </div>
                 <div className="text-xs text-muted-foreground">日均大卡</div>
               </div>
               <div className="text-center space-y-1">
                 <div className="text-2xl font-bold">
-                  {weeklyStats.totalCalories.toLocaleString()}
+                  {weeklyStats.totalCalories.toFixed(0)}
                 </div>
                 <div className="text-xs text-muted-foreground">週總大卡</div>
               </div>
@@ -65,19 +65,19 @@ export function WeeklySummary({ weeklyStats }: WeeklySummaryProps) {
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-amber-50 dark:bg-amber-950/20 rounded-lg p-3 text-center space-y-1">
               <div className="text-lg font-bold text-amber-700 dark:text-amber-400">
-                {Math.round(weeklyStats.avgProtein)}g
+                {weeklyStats.avgProtein.toFixed(1)}g
               </div>
               <div className="text-xs text-amber-600 dark:text-amber-500">蛋白質</div>
             </div>
             <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-3 text-center space-y-1">
               <div className="text-lg font-bold text-blue-700 dark:text-blue-400">
-                {Math.round(weeklyStats.avgCarbs)}g
+                {weeklyStats.avgCarbs.toFixed(1)}g
               </div>
               <div className="text-xs text-blue-600 dark:text-blue-500">碳水化合物</div>
             </div>
             <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-3 text-center space-y-1">
               <div className="text-lg font-bold text-green-700 dark:text-green-400">
-                {Math.round(weeklyStats.avgFat)}g
+                {weeklyStats.avgFat.toFixed(1)}g
               </div>
               <div className="text-xs text-green-600 dark:text-green-500">脂肪</div>
             </div>

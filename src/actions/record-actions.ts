@@ -11,62 +11,29 @@ export async function createNutritionRecord(
   data: NutritionInput,
   recordedAt?: Date
 ): Promise<NutritionRecord> {
-  console.log("[CREATE_NUTRITION_RECORD] 開始創建營養記錄:", {
-    userId,
-    data,
-    recordedAt,
-    hasDb: !!db,
-    hasNutritionRecordModel: !!db?.nutritionRecord,
-    timestamp: new Date().toISOString()
-  })
-
   try {
-    console.log("[CREATE_NUTRITION_RECORD] 確保用戶存在:", { userId })
     await ensureUserExists(userId)
-    console.log("[CREATE_NUTRITION_RECORD] 用戶確認存在")
-
-    const recordData = {
-      userId,
-      name: data.name,
-      category: String(data.category),
-      calories: data.calories,
-      protein: data.protein,
-      carbs: data.carbs,
-      fat: data.fat,
-      sourceType: data.sourceType,
-      foodId: data.foodId || null,
-      amount: data.amount || null,
-      recordedAt: recordedAt || new Date()
-    }
-
-    console.log("[CREATE_NUTRITION_RECORD] 準備創建記錄資料:", {
-      recordData,
-      timestamp: new Date().toISOString()
-    })
 
     const record = await db.nutritionRecord.create({
-      data: recordData
-    })
-
-    console.log("[CREATE_NUTRITION_RECORD] 營養記錄創建成功:", {
-      recordId: record.id,
-      recordName: record.name,
-      calories: record.calories,
-      sourceType: record.sourceType,
-      userId: record.userId,
-      timestamp: new Date().toISOString()
+      data: {
+        userId,
+        name: data.name,
+        category: String(data.category),
+        calories: data.calories,
+        protein: data.protein,
+        carbs: data.carbs,
+        fat: data.fat,
+        sourceType: data.sourceType,
+        foodId: data.foodId || null,
+        amount: data.amount || null,
+        recordedAt: recordedAt || new Date()
+      }
     })
 
     revalidatePath("/")
     return record
   } catch (error) {
-    console.error("[CREATE_NUTRITION_RECORD] 營養記錄創建失敗:", {
-      userId,
-      data,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
-    })
+    console.error("營養記錄創建失敗:", error)
     throw error
   }
 }
@@ -77,13 +44,6 @@ export async function createFoodBasedRecord(
   data: { foodId: string; amount: number },
   recordedAt?: Date
 ): Promise<NutritionRecord> {
-  console.log("[CREATE_FOOD_BASED] 重導向到統一創建函數:", {
-    userId,
-    data,
-    recordedAt,
-    timestamp: new Date().toISOString()
-  })
-
   return await createNutritionRecordFromFood(userId, data.foodId, data.amount, recordedAt)
 }
 
@@ -93,13 +53,6 @@ export async function createDirectNutritionRecord(
   data: { name?: string; category: string; calories: number; protein: number; carbs: number; fat: number },
   recordedAt?: Date
 ): Promise<NutritionRecord> {
-  console.log("[CREATE_DIRECT_NUTRITION] 重導向到統一創建函數:", {
-    userId,
-    data,
-    recordedAt,
-    timestamp: new Date().toISOString()
-  })
-
   const nutritionInput: NutritionInput = {
     name: data.name || "手動輸入",
     category: String(data.category),
@@ -117,25 +70,12 @@ export async function getNutritionRecordsByDate(
   userId: string,
   date: Date = new Date()
 ): Promise<NutritionRecordWithFood[]> {
-  // 使用 UTC 時間確保跨時區一致性
-  const utcDate = new Date(date.toISOString().split('T')[0] + 'T00:00:00.000Z')
-
-  const startOfDay = new Date(utcDate)
-  const endOfDay = new Date(utcDate)
-  endOfDay.setUTCHours(23, 59, 59, 999)
-
-  console.log("[GET_NUTRITION_BY_DATE] 開始查詢日期營養記錄:", {
-    userId,
-    date: date.toISOString(),
-    startOfDay: startOfDay.toISOString(),
-    endOfDay: endOfDay.toISOString(),
-    hasDb: !!db,
-    hasNutritionRecordModel: !!db?.nutritionRecord,
-    timestamp: new Date().toISOString()
-  })
+  const dateStr = date.toISOString().split('T')[0]
+  const startOfDay = new Date(dateStr + 'T00:00:00.000Z')
+  const endOfDay = new Date(dateStr + 'T23:59:59.999Z')
 
   try {
-    const records = await db.nutritionRecord.findMany({
+    return await db.nutritionRecord.findMany({
       where: {
         userId,
         recordedAt: {
@@ -148,27 +88,8 @@ export async function getNutritionRecordsByDate(
       },
       orderBy: { recordedAt: "asc" }
     })
-
-    console.log("[GET_NUTRITION_BY_DATE] 日期營養記錄查詢成功:", {
-      userId,
-      date: date.toISOString(),
-      recordsCount: records.length,
-      recordIds: records.map(r => r.id),
-      totalCalories: records.reduce((sum, r) => sum + (r.calories || 0), 0),
-      timestamp: new Date().toISOString()
-    })
-
-    return records
   } catch (error) {
-    console.error("[GET_NUTRITION_BY_DATE] 日期營養記錄查詢失敗:", {
-      userId,
-      date: date.toISOString(),
-      startOfDay: startOfDay.toISOString(),
-      endOfDay: endOfDay.toISOString(),
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
-    })
+    console.error("日期營養記錄查詢失敗:", error)
     throw error
   }
 }
@@ -178,21 +99,11 @@ export async function getNutritionRecordsByDateRange(
   startDate: Date,
   endDate: Date
 ): Promise<NutritionRecordWithFood[]> {
-  // 確保使用 UTC 時間進行範圍查詢
   const utcStartDate = new Date(startDate.toISOString().split('T')[0] + 'T00:00:00.000Z')
   const utcEndDate = new Date(endDate.toISOString().split('T')[0] + 'T23:59:59.999Z')
-  console.log("[GET_NUTRITION_BY_RANGE] 開始查詢日期範圍營養記錄:", {
-    userId,
-    startDate: startDate.toISOString(),
-    endDate: endDate.toISOString(),
-    dateRangeDays: Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)),
-    hasDb: !!db,
-    hasNutritionRecordModel: !!db?.nutritionRecord,
-    timestamp: new Date().toISOString()
-  })
 
   try {
-    const records = await db.nutritionRecord.findMany({
+    return await db.nutritionRecord.findMany({
       where: {
         userId,
         recordedAt: {
@@ -205,30 +116,8 @@ export async function getNutritionRecordsByDateRange(
       },
       orderBy: { recordedAt: "asc" }
     })
-
-    console.log("[GET_NUTRITION_BY_RANGE] 日期範圍營養記錄查詢成功:", {
-      userId,
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-      recordsCount: records.length,
-      totalCalories: records.reduce((sum, r) => sum + (r.calories || 0), 0),
-      dateSpread: {
-        earliest: records.length > 0 ? records[0].recordedAt?.toISOString() : null,
-        latest: records.length > 0 ? records[records.length - 1].recordedAt?.toISOString() : null
-      },
-      timestamp: new Date().toISOString()
-    })
-
-    return records
   } catch (error) {
-    console.error("[GET_NUTRITION_BY_RANGE] 日期範圍營養記錄查詢失敗:", {
-      userId,
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
-    })
+    console.error("日期範圍營養記錄查詢失敗:", error)
     throw error
   }
 }
@@ -365,16 +254,7 @@ export async function createNutritionRecordFromFood(
   amount: number,
   recordedAt?: Date
 ): Promise<NutritionRecord> {
-  console.log("[CREATE_RECORD_FROM_FOOD] 開始從食物創建營養記錄:", {
-    userId,
-    foodId,
-    amount,
-    recordedAt,
-    timestamp: new Date().toISOString()
-  })
-
   try {
-    // 獲取食物資料
     const food = await db.food.findUnique({
       where: { id: foodId }
     })
@@ -383,7 +263,6 @@ export async function createNutritionRecordFromFood(
       throw new Error("Food not found")
     }
 
-    // 計算營養素
     const factor = amount / 100
     const nutritionInput: NutritionInput = {
       name: food.name,
@@ -397,29 +276,9 @@ export async function createNutritionRecordFromFood(
       amount: amount
     }
 
-    console.log("[CREATE_RECORD_FROM_FOOD] 計算營養素:", {
-      foodName: food.name,
-      amount,
-      factor,
-      calculatedNutrition: {
-        calories: nutritionInput.calories,
-        protein: nutritionInput.protein,
-        carbs: nutritionInput.carbs,
-        fat: nutritionInput.fat
-      },
-      timestamp: new Date().toISOString()
-    })
-
     return await createNutritionRecord(userId, nutritionInput, recordedAt)
   } catch (error) {
-    console.error("[CREATE_RECORD_FROM_FOOD] 從食物創建營養記錄失敗:", {
-      userId,
-      foodId,
-      amount,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
-    })
+    console.error("從食物創建營養記錄失敗:", error)
     throw error
   }
 }

@@ -45,7 +45,7 @@ model NutritionRecord {
 model WeeklyStats {
   id                String @id @default(cuid())
   weekStartDate     DateTime // Monday of the week
-  totalCalories     Int
+  totalCalories     Float
   avgDailyCalories  Float
   totalProtein      Float
   totalCarbs        Float

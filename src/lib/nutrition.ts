@@ -1,20 +1,7 @@
 import type { NutritionRecord, NutritionRecordWithFood, NutritionSummary, MacroRatio } from "./types"
 
 export function calculateNutrition(records: NutritionRecord[] | NutritionRecordWithFood[]): NutritionSummary {
-  console.log("[CALCULATE_NUTRITION] 開始計算營養總和:", {
-    recordsCount: records.length,
-    recordsPreview: records.slice(0, 3).map(r => ({
-      id: r.id,
-      name: r.name,
-      calories: r.calories,
-      protein: r.protein,
-      carbs: r.carbs,
-      fat: r.fat
-    })),
-    timestamp: new Date().toISOString()
-  })
-
-  const result = records.reduce(
+  return records.reduce(
     (total, record) => ({
       calories: total.calories + record.calories,
       protein: total.protein + record.protein,
@@ -23,14 +10,6 @@ export function calculateNutrition(records: NutritionRecord[] | NutritionRecordW
     }),
     { calories: 0, protein: 0, carbs: 0, fat: 0 }
   )
-
-  console.log("[CALCULATE_NUTRITION] 營養總和計算完成:", {
-    recordsCount: records.length,
-    result,
-    timestamp: new Date().toISOString()
-  })
-
-  return result
 }
 
 export function calculateMacroRatios(nutrition: NutritionSummary): MacroRatio[] {
