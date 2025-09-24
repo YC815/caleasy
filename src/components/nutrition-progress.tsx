@@ -39,11 +39,11 @@ export function NutritionProgress({ calorieData, proteinData, onGoalsUpdate }: N
             </div>
             <div className="text-right">
               {calorieData.isOverGoal ? (
-                <span className="text-sm font-semibold text-red-500">
+                <span className="text-lg font-bold text-red-500">
                   超標 {Math.abs(calorieData.remaining)} kcal
                 </span>
               ) : (
-                <span className="text-sm font-semibold">
+                <span className="text-lg font-bold text-green-600">
                   剩餘 {calorieData.remaining} kcal
                 </span>
               )}
@@ -70,11 +70,11 @@ export function NutritionProgress({ calorieData, proteinData, onGoalsUpdate }: N
             </div>
             <div className="text-right">
               {proteinData.isOverGoal ? (
-                <span className="text-sm font-semibold text-green-500">
+                <span className="text-lg font-bold text-green-500">
                   多攝取 {proteinData.overAmount}g 蛋白質
                 </span>
               ) : (
-                <span className="text-sm font-semibold">
+                <span className="text-lg font-bold text-blue-600">
                   {Math.round(proteinData.consumed)} / {proteinData.goal}g
                 </span>
               )}

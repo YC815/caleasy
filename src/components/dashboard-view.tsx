@@ -11,6 +11,7 @@ import { PieChartSkeleton, LineChartSkeleton } from "@/components/skeletons/char
 import { FoodListSkeleton } from "@/components/skeletons/food-list-skeleton"
 import { UserButton } from "@clerk/nextjs"
 import { BarChart3, History, Calendar } from "lucide-react"
+import Image from "next/image"
 import { getNutritionRecordsByDate, getRecentNutritionRecords } from "@/actions/record-actions"
 import { getOrCreateWeeklyStats, getDailyCaloriesForWeek } from "@/actions/weekly-stats-actions"
 import { getUserGoals } from "@/actions/user-actions"
@@ -279,6 +280,19 @@ export function DashboardView({ userId }: DashboardViewProps) {
                   proteinData={proteinProgress}
                   onGoalsUpdate={loadData}
                 />
+
+                {/* 主畫面照片 */}
+                <div className="flex justify-center">
+                  <div className="relative w-full max-w-xs aspect-square rounded-lg overflow-hidden border shadow-lg">
+                    <Image
+                      src="/small_li_li.png"
+                      alt="Profile"
+                      fill
+                      className="object-cover"
+                      priority
+                    />
+                  </div>
+                </div>
               </>
             ) : (
               <>
