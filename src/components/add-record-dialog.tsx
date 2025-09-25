@@ -156,7 +156,6 @@ export function AddRecordDialog({ onSuccess }: AddRecordDialogProps) {
                     value={formData.calories}
                     onChange={handleInputChange("calories")}
                     required
-                    autoFocus
                     tabIndex={1}
                   />
                 </div>
