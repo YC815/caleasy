@@ -93,7 +93,7 @@ export function WeeklyChart({ thisWeekData, lastWeekData }: WeeklyChartProps) {
                     })
                   }}
                   formatter={(value, name) => [
-                    `${value} 大卡`,
+                    `${Number(value).toFixed(1)} 大卡`,
                     chartConfig[name as keyof typeof chartConfig]?.label || name
                   ]}
                 />
