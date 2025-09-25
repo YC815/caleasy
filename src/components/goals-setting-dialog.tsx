@@ -91,7 +91,7 @@ export function GoalsSettingDialog({ onUpdate }: GoalsSettingDialogProps) {
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="calorie" className="text-right">
-              熱量目標
+              熱量
             </Label>
             <div className="col-span-3 flex items-center gap-2">
               <Input
@@ -108,7 +108,7 @@ export function GoalsSettingDialog({ onUpdate }: GoalsSettingDialogProps) {
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="protein" className="text-right">
-              蛋白質目標
+              蛋白質
             </Label>
             <div className="col-span-3 flex items-center gap-2">
               <Input
