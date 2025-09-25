@@ -29,6 +29,14 @@ export async function createNutritionRecord(
       }
     })
 
+    // 自動更新相關週統計
+    try {
+      const { updateWeeklyStats } = await import("./weekly-stats-actions")
+      await updateWeeklyStats(userId, record.recordedAt)
+    } catch (statsError) {
+      console.error("週統計更新失敗，但記錄已創建:", statsError)
+    }
+
     revalidatePath("/")
     return record
   } catch (error) {
@@ -94,16 +102,17 @@ export async function getNutritionRecordsByDateRange(
   startDate: Date,
   endDate: Date
 ): Promise<NutritionRecordWithFood[]> {
-  const { start: utcStartDate } = timeManager.getDayBounds(startDate)
-  const { end: utcEndDate } = timeManager.getDayBounds(endDate)
+  const { start: actualStartDate } = timeManager.getDayBounds(startDate)
+  const { end: actualEndDate } = timeManager.getDayBounds(endDate)
+
 
   try {
-    return await db.nutritionRecord.findMany({
+    const records = await db.nutritionRecord.findMany({
       where: {
         userId,
         recordedAt: {
-          gte: utcStartDate,
-          lte: utcEndDate
+          gte: actualStartDate,
+          lte: actualEndDate
         }
       },
       include: {
@@ -111,6 +120,9 @@ export async function getNutritionRecordsByDateRange(
       },
       orderBy: { recordedAt: "asc" }
     })
+
+
+    return records
   } catch (error) {
     console.error("日期範圍營養記錄查詢失敗:", error)
     throw error
@@ -127,6 +139,15 @@ export async function deleteNutritionRecord(recordId: string): Promise<void> {
   })
 
   try {
+    // 先獲取記錄信息，用於更新週統計
+    const record = await db.nutritionRecord.findUnique({
+      where: { id: recordId }
+    })
+
+    if (!record) {
+      throw new Error("營養記錄不存在")
+    }
+
     await db.nutritionRecord.delete({
       where: { id: recordId }
     })
@@ -135,6 +156,14 @@ export async function deleteNutritionRecord(recordId: string): Promise<void> {
       recordId,
       timestamp: timeManager.now().toISOString()
     })
+
+    // 自動更新相關週統計
+    try {
+      const { updateWeeklyStats } = await import("./weekly-stats-actions")
+      await updateWeeklyStats(record.userId, record.recordedAt)
+    } catch (statsError) {
+      console.error("週統計更新失敗，但記錄已刪除:", statsError)
+    }
 
     revalidatePath("/")
   } catch (error) {
@@ -176,6 +205,14 @@ export async function updateNutritionRecord(
       },
       timestamp: timeManager.now().toISOString()
     })
+
+    // 自動更新相關週統計
+    try {
+      const { updateWeeklyStats } = await import("./weekly-stats-actions")
+      await updateWeeklyStats(record.userId, record.recordedAt)
+    } catch (statsError) {
+      console.error("週統計更新失敗，但記錄已更新:", statsError)
+    }
 
     revalidatePath("/")
     return record

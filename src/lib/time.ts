@@ -26,13 +26,15 @@ export class TimeManager {
     return this._now()
   }
 
-  // 統一的 UTC 日期邊界計算 - 消除所有手動字串拼接
+  // 統一的本地日期邊界計算 - 消除時區混用
   getDayBounds(date: Date = this.now()): DateBounds {
-    const dateStr = date.toISOString().split('T')[0]
-    return {
-      start: new Date(dateStr + 'T00:00:00.000Z'),
-      end: new Date(dateStr + 'T23:59:59.999Z')
-    }
+    const start = new Date(date)
+    start.setHours(0, 0, 0, 0)
+
+    const end = new Date(date)
+    end.setHours(23, 59, 59, 999)
+
+    return { start, end }
   }
 
   // 週的開始日期（週一）
