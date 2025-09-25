@@ -12,6 +12,12 @@ import type {
   ProteinProgressData
 } from "@/lib/types"
 
+function getProfileImage(calorieData: CalorieProgressData, proteinData: ProteinProgressData): string {
+  if (calorieData.isOverGoal) return "/fat_li_li.jpg"
+  if (proteinData.isOverGoal) return "/strong_li_li.png"
+  return "/small_li_li.png"
+}
+
 type ViewMode = "overview" | "history"
 type TimeFrame = "daily" | "weekly"
 
@@ -77,7 +83,7 @@ export function DashboardContent({
         <div className="flex justify-center">
           <div className="relative w-full max-w-xs aspect-square rounded-lg overflow-hidden border shadow-lg">
             <Image
-              src="/small_li_li.png"
+              src={getProfileImage(data.calorieProgress, data.proteinProgress)}
               alt="Profile"
               fill
               className="object-cover"
