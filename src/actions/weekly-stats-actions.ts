@@ -5,27 +5,12 @@ import { revalidatePath } from "next/cache"
 import { getNutritionRecordsByDateRange } from "./record-actions"
 import { calculateNutrition } from "@/lib/nutrition"
 import { ensureUserExists } from "@/lib/user-utils"
+import { timeManager } from "@/lib/time"
 import type { WeeklyStats } from "@/lib/types"
 
-function getWeekStartDate(date: Date): Date {
-  const d = new Date(date)
-  const day = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
-  d.setDate(diff)
-  d.setHours(0, 0, 0, 0)
-  return d
-}
 
-function getWeekEndDate(weekStart: Date): Date {
-  const d = new Date(weekStart)
-  d.setDate(d.getDate() + 6)
-  d.setHours(23, 59, 59, 999)
-  return d
-}
-
-export async function calculateWeeklyStats(userId: string, date: Date = new Date()): Promise<WeeklyStats> {
-  const weekStart = getWeekStartDate(date)
-  const weekEnd = getWeekEndDate(weekStart)
+export async function calculateWeeklyStats(userId: string, date: Date = timeManager.now()): Promise<WeeklyStats> {
+  const { start: weekStart, end: weekEnd } = timeManager.getWeekBounds(date)
 
   try {
     const records = await getNutritionRecordsByDateRange(userId, weekStart, weekEnd)
@@ -41,8 +26,8 @@ export async function calculateWeeklyStats(userId: string, date: Date = new Date
         avgProtein: 0,
         recordsCount: 0,
         actualDays: 0,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        createdAt: timeManager.now(),
+        updatedAt: timeManager.now()
       }
     }
 
@@ -59,8 +44,8 @@ export async function calculateWeeklyStats(userId: string, date: Date = new Date
       avgProtein: totalNutrition.protein / actualDays,
       recordsCount: records.length,
       actualDays,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: timeManager.now(),
+      updatedAt: timeManager.now()
     }
   } catch (error) {
     console.error("週統計計算失敗:", error)
@@ -68,8 +53,8 @@ export async function calculateWeeklyStats(userId: string, date: Date = new Date
   }
 }
 
-export async function getOrCreateWeeklyStats(userId: string, date: Date = new Date()): Promise<WeeklyStats> {
-  const weekStart = getWeekStartDate(date)
+export async function getOrCreateWeeklyStats(userId: string, date: Date = timeManager.now()): Promise<WeeklyStats> {
+  const weekStart = timeManager.getWeekStartDate(date)
 
   try {
     await ensureUserExists(userId)
@@ -109,8 +94,8 @@ export async function getOrCreateWeeklyStats(userId: string, date: Date = new Da
   }
 }
 
-export async function updateWeeklyStats(userId: string, date: Date = new Date()): Promise<WeeklyStats> {
-  const weekStart = getWeekStartDate(date)
+export async function updateWeeklyStats(userId: string, date: Date = timeManager.now()): Promise<WeeklyStats> {
+  const weekStart = timeManager.getWeekStartDate(date)
 
   try {
     await ensureUserExists(userId)
@@ -149,9 +134,9 @@ export async function updateWeeklyStats(userId: string, date: Date = new Date())
 }
 
 export async function getWeeklyStatsHistory(userId: string, weeksBack: number = 4): Promise<WeeklyStats[]> {
-  const startDate = new Date()
+  const startDate = timeManager.now()
   startDate.setDate(startDate.getDate() - (weeksBack * 7))
-  const weekStartFilter = getWeekStartDate(startDate)
+  const weekStartFilter = timeManager.getWeekStartDate(startDate)
 
   try {
     await ensureUserExists(userId)
@@ -171,8 +156,8 @@ export async function getWeeklyStatsHistory(userId: string, weeksBack: number = 
   }
 }
 
-export async function getDailyCaloriesForWeek(userId: string, date: Date = new Date()): Promise<{ date: string; calories: number }[]> {
-  const weekStart = getWeekStartDate(date)
+export async function getDailyCaloriesForWeek(userId: string, date: Date = timeManager.now()): Promise<{ date: string; calories: number }[]> {
+  const weekStart = timeManager.getWeekStartDate(date)
 
   try {
     await ensureUserExists(userId)
@@ -183,15 +168,12 @@ export async function getDailyCaloriesForWeek(userId: string, date: Date = new D
       const currentDate = new Date(weekStart)
       currentDate.setDate(currentDate.getDate() + i)
 
-      const dateStr = currentDate.toISOString().split('T')[0]
-      const dayStart = new Date(dateStr + 'T00:00:00.000Z')
-      const dayEnd = new Date(dateStr + 'T23:59:59.999Z')
-
+      const { start: dayStart, end: dayEnd } = timeManager.getDayBounds(currentDate)
       const dayRecords = await getNutritionRecordsByDateRange(userId, dayStart, dayEnd)
       const dayNutrition = calculateNutrition(dayRecords)
 
       dailyData.push({
-        date: dateStr,
+        date: timeManager.getDateString(currentDate),
         calories: dayNutrition.calories
       })
     }

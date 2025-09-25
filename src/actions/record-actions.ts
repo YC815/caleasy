@@ -3,6 +3,7 @@
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { ensureUserExists } from "@/lib/user-utils"
+import { timeManager } from "@/lib/time"
 import type { NutritionRecord, NutritionRecordWithFood, NutritionInput } from "@/lib/types"
 
 // 統一的營養記錄創建函數 - 消除所有特殊情況
@@ -24,7 +25,7 @@ export async function createNutritionRecord(
         sourceType: data.sourceType,
         foodId: data.foodId || null,
         amount: data.amount || null,
-        recordedAt: recordedAt || new Date()
+        recordedAt: recordedAt || timeManager.now()
       }
     })
 
@@ -64,19 +65,17 @@ export async function createDirectNutritionRecord(
 
 export async function getNutritionRecordsByDate(
   userId: string,
-  date: Date = new Date()
+  date: Date = timeManager.now()
 ): Promise<NutritionRecordWithFood[]> {
-  const dateStr = date.toISOString().split('T')[0]
-  const startOfDay = new Date(dateStr + 'T00:00:00.000Z')
-  const endOfDay = new Date(dateStr + 'T23:59:59.999Z')
+  const { start: utcStartDate, end: utcEndDate } = timeManager.getDayBounds(date)
 
   try {
     return await db.nutritionRecord.findMany({
       where: {
         userId,
         recordedAt: {
-          gte: startOfDay,
-          lte: endOfDay
+          gte: utcStartDate,
+          lte: utcEndDate
         }
       },
       include: {
@@ -95,8 +94,8 @@ export async function getNutritionRecordsByDateRange(
   startDate: Date,
   endDate: Date
 ): Promise<NutritionRecordWithFood[]> {
-  const utcStartDate = new Date(startDate.toISOString().split('T')[0] + 'T00:00:00.000Z')
-  const utcEndDate = new Date(endDate.toISOString().split('T')[0] + 'T23:59:59.999Z')
+  const { start: utcStartDate } = timeManager.getDayBounds(startDate)
+  const { end: utcEndDate } = timeManager.getDayBounds(endDate)
 
   try {
     return await db.nutritionRecord.findMany({
@@ -124,7 +123,7 @@ export async function deleteNutritionRecord(recordId: string): Promise<void> {
     recordId,
     hasDb: !!db,
     hasNutritionRecordModel: !!db?.nutritionRecord,
-    timestamp: new Date().toISOString()
+    timestamp: timeManager.now().toISOString()
   })
 
   try {
@@ -134,7 +133,7 @@ export async function deleteNutritionRecord(recordId: string): Promise<void> {
 
     console.log("[DELETE_NUTRITION_RECORD] 營養記錄刪除成功:", {
       recordId,
-      timestamp: new Date().toISOString()
+      timestamp: timeManager.now().toISOString()
     })
 
     revalidatePath("/")
@@ -143,7 +142,7 @@ export async function deleteNutritionRecord(recordId: string): Promise<void> {
       recordId,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      timestamp: timeManager.now().toISOString()
     })
     throw error
   }
@@ -158,7 +157,7 @@ export async function updateNutritionRecord(
     updateData: data,
     hasDb: !!db,
     hasNutritionRecordModel: !!db?.nutritionRecord,
-    timestamp: new Date().toISOString()
+    timestamp: timeManager.now().toISOString()
   })
 
   try {
@@ -175,7 +174,7 @@ export async function updateNutritionRecord(
         calories: record.calories,
         protein: record.protein
       },
-      timestamp: new Date().toISOString()
+      timestamp: timeManager.now().toISOString()
     })
 
     revalidatePath("/")
@@ -186,7 +185,7 @@ export async function updateNutritionRecord(
       updateData: data,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      timestamp: timeManager.now().toISOString()
     })
     throw error
   }
@@ -201,7 +200,7 @@ export async function getRecentNutritionRecords(
     limit,
     hasDb: !!db,
     hasNutritionRecordModel: !!db?.nutritionRecord,
-    timestamp: new Date().toISOString()
+    timestamp: timeManager.now().toISOString()
   })
 
   try {
@@ -225,7 +224,7 @@ export async function getRecentNutritionRecords(
         latest: records.length > 0 ? records[0].recordedAt?.toISOString() : null,
         earliest: records.length > 0 ? records[records.length - 1].recordedAt?.toISOString() : null
       },
-      timestamp: new Date().toISOString()
+      timestamp: timeManager.now().toISOString()
     })
 
     return records
@@ -235,7 +234,7 @@ export async function getRecentNutritionRecords(
       limit,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      timestamp: timeManager.now().toISOString()
     })
     throw error
   }

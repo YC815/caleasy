@@ -6,6 +6,7 @@ import { Edit, Trash2 } from "lucide-react"
 import type { NutritionRecordWithFood } from "@/lib/types"
 import { deleteNutritionRecord } from "@/actions/record-actions"
 import { EditNutritionDialog } from "./edit-nutrition-dialog"
+import { timeManager } from "@/lib/time"
 
 type NutritionListProps = {
   records: NutritionRecordWithFood[]
@@ -13,21 +14,6 @@ type NutritionListProps = {
   onRecordChange?: () => void
 }
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString("zh-TW", {
-    hour: "2-digit",
-    minute: "2-digit"
-  })
-}
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("zh-TW", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    weekday: "long"
-  })
-}
 
 function groupRecordsByDate(records: NutritionRecordWithFood[]): { date: string; records: NutritionRecordWithFood[] }[] {
   const groups: { [key: string]: NutritionRecordWithFood[] } = {}
@@ -42,7 +28,7 @@ function groupRecordsByDate(records: NutritionRecordWithFood[]): { date: string;
 
   return Object.entries(groups)
     .map(([dateKey, records]) => ({
-      date: formatDate(new Date(dateKey)),
+      date: timeManager.formatDisplay(new Date(dateKey)),
       records: records.sort((a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime())
     }))
     .sort((a, b) => new Date(b.records[0].recordedAt).getTime() - new Date(a.records[0].recordedAt).getTime())
@@ -111,7 +97,7 @@ export function NutritionList({ records, showGroupedByDate = false, onRecordChan
                     <div className="text-sm text-muted-foreground">
                       {record.food && record.amount && `${record.amount}g • `}
                       {Math.round(record.calories)} 大卡 •{" "}
-                      {formatTime(new Date(record.recordedAt))}
+                      {timeManager.formatTime(new Date(record.recordedAt))}
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
                       蛋白質 {Math.round(record.protein * 10) / 10}g
@@ -201,7 +187,7 @@ export function NutritionList({ records, showGroupedByDate = false, onRecordChan
               <div className="text-sm text-muted-foreground">
                 {record.food && record.amount && `${record.amount}g • `}
                 {Math.round(record.calories)} 大卡 •{" "}
-                {formatTime(new Date(record.recordedAt))}
+                {timeManager.formatTime(new Date(record.recordedAt))}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
                 蛋白質 {Math.round(record.protein * 10) / 10}g

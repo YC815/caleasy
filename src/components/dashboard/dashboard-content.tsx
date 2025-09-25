@@ -3,6 +3,7 @@ import { NutritionList } from "@/components/nutrition-list"
 import { WeeklyChart } from "@/components/weekly-chart"
 import { WeeklySummary } from "@/components/weekly-summary"
 import { DashboardSkeleton, ListSkeleton } from "@/components/skeletons"
+import { timeManager } from "@/lib/time"
 import Image from "next/image"
 import type {
   NutritionRecordWithFood,
@@ -66,6 +67,11 @@ export function DashboardContent({
           proteinData={data.proteinProgress}
           onGoalsUpdate={onGoalsUpdate}
         />
+
+        {/* 當前時間確認 */}
+        <div className="text-center text-xs text-muted-foreground">
+          當前時間: {timeManager.formatDateTime(timeManager.now())}
+        </div>
 
         {/* 主畫面照片 */}
         <div className="flex justify-center">

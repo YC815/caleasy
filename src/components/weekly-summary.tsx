@@ -4,13 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TrendingUp, Calendar, Utensils } from "lucide-react"
 import type { WeeklyStats } from "@/lib/types"
 import { Separator } from "@/components/ui/separator"
+import { timeManager } from "@/lib/time"
 
 type WeeklySummaryProps = {
   weeklyStats: WeeklyStats
 }
 
 export function WeeklySummary({ weeklyStats }: WeeklySummaryProps) {
-  const weekEnd = new Date(weeklyStats.weekStartDate.getTime() + 6 * 24 * 60 * 60 * 1000)
 
   return (
     <Card>
@@ -20,13 +20,7 @@ export function WeeklySummary({ weeklyStats }: WeeklySummaryProps) {
           <CardTitle className="text-lg">本週營養統計</CardTitle>
         </div>
         <div className="text-sm text-muted-foreground">
-          {weeklyStats.weekStartDate.toLocaleDateString("zh-TW", {
-            month: "short",
-            day: "numeric"
-          })} - {weekEnd.toLocaleDateString("zh-TW", {
-            month: "short",
-            day: "numeric"
-          })}
+          {timeManager.formatWeeklyRange(weeklyStats.weekStartDate)}
         </div>
       </CardHeader>
 

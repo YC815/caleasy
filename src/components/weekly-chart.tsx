@@ -10,6 +10,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
+import { timeManager } from "@/lib/time"
 
 type WeeklyChartProps = {
   thisWeekData: { date: string; calories: number }[]
@@ -32,11 +33,7 @@ export function WeeklyChart({ thisWeekData, lastWeekData }: WeeklyChartProps) {
     const firstDate = new Date(weekData[0].date)
     const lastDate = new Date(weekData[weekData.length - 1].date)
 
-    const formatDate = (date: Date) => {
-      return `${date.getMonth() + 1}/${date.getDate()}`
-    }
-
-    return `${formatDate(firstDate)} - ${formatDate(lastDate)}`
+    return `${timeManager.formatChartDate(firstDate)} - ${timeManager.formatChartDate(lastDate)}`
   }
 
   return (
@@ -80,7 +77,7 @@ export function WeeklyChart({ thisWeekData, lastWeekData }: WeeklyChartProps) {
               tickMargin={8}
               tickFormatter={(value) => {
                 const date = new Date(value)
-                return date.toLocaleDateString("zh-TW", { weekday: "short" })
+                return timeManager.formatWeekday(date)
               }}
             />
             <ChartTooltip
