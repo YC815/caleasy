@@ -151,6 +151,30 @@ export function useDashboardData(userId: string, timeFrame: TimeFrame) {
     loadHistoryData()
   }, [loadData, loadHistoryData])
 
+  // 新增：午夜自動刷新機制 - 確保00:00後立即看到新的一天
+  useEffect(() => {
+    const checkMidnight = () => {
+      const now = new Date()
+      const tomorrow = new Date(now)
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      tomorrow.setHours(0, 0, 0, 0)
+
+      const msUntilMidnight = tomorrow.getTime() - now.getTime()
+
+      // 在午夜後5秒自動刷新數據
+      const timer = setTimeout(() => {
+        console.log('[DashboardData] 午夜自動刷新數據')
+        loadData()
+        loadHistoryData()
+      }, msUntilMidnight + 5000)
+
+      return timer
+    }
+
+    const timer = checkMidnight()
+    return () => clearTimeout(timer)
+  }, [loadData, loadHistoryData])
+
   return {
     data,
     isLoading: (key: string) => isLoading(key),

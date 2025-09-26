@@ -17,6 +17,14 @@ export class TimeManager {
     return this.instance
   }
 
+  // 調試用：顯示當前時間邊界計算結果
+  debugDayBounds(date: Date = this.now()): void {
+    const bounds = this.getDayBounds(date)
+    console.log(`[TimeManager] 日期邊界調試 - 輸入時間: ${date.toLocaleString('zh-TW')}`)
+    console.log(`[TimeManager] 查詢範圍: ${bounds.start.toLocaleString('zh-TW')} 到 ${bounds.end.toLocaleString('zh-TW')}`)
+    console.log(`[TimeManager] UTC範圍: ${bounds.start.toISOString()} 到 ${bounds.end.toISOString()}`)
+  }
+
   // 測試友善：允許注入時間函數
   setTimeFunction(nowFn: () => Date): void {
     this._now = nowFn

@@ -77,6 +77,11 @@ export async function getNutritionRecordsByDate(
 ): Promise<NutritionRecordWithFood[]> {
   const { start: utcStartDate, end: utcEndDate } = timeManager.getDayBounds(date)
 
+  // 調試時間邊界計算 - 幫助定位「8點更新」問題
+  if (process.env.NODE_ENV === 'development') {
+    timeManager.debugDayBounds(date)
+  }
+
   try {
     return await db.nutritionRecord.findMany({
       where: {
