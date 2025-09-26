@@ -3,6 +3,7 @@ import { getNutritionRecordsByDate, getRecentNutritionRecords } from "@/actions/
 import { getOrCreateWeeklyStats, getDailyCaloriesForWeek } from "@/actions/weekly-stats-actions"
 import { getUserGoals } from "@/actions/user-actions"
 import { calculateNutrition, calculateCalorieProgress, calculateProteinProgress } from "@/lib/nutrition"
+import { timeManager } from "@/lib/time"
 import { useUnifiedLoading } from "./use-unified-loading"
 import type {
   NutritionRecordWithFood,
@@ -62,7 +63,7 @@ export function useDashboardData(userId: string, timeFrame: TimeFrame) {
     setLoading("dailyData", "loading")
     try {
       const [todayRecs, userGoals] = await Promise.all([
-        getNutritionRecordsByDate(userId, new Date()),
+        getNutritionRecordsByDate(userId, timeManager.now()),
         getUserGoals(userId)
       ])
 
@@ -93,7 +94,7 @@ export function useDashboardData(userId: string, timeFrame: TimeFrame) {
 
     setLoading("weeklyData", "loading")
     try {
-      const now = new Date()
+      const now = timeManager.now()
       const lastWeek = new Date(now)
       lastWeek.setDate(lastWeek.getDate() - 7)
 
@@ -154,12 +155,11 @@ export function useDashboardData(userId: string, timeFrame: TimeFrame) {
   // 新增：午夜自動刷新機制 - 確保00:00後立即看到新的一天
   useEffect(() => {
     const checkMidnight = () => {
-      const now = new Date()
-      const tomorrow = new Date(now)
-      tomorrow.setDate(tomorrow.getDate() + 1)
-      tomorrow.setHours(0, 0, 0, 0)
+      // 使用 timeManager 確保時區正確性
+      const now = timeManager.now()
+      const { end: todayEnd } = timeManager.getDayBounds(now)
 
-      const msUntilMidnight = tomorrow.getTime() - now.getTime()
+      const msUntilMidnight = todayEnd.getTime() - now.getTime()
 
       // 在午夜後5秒自動刷新數據
       const timer = setTimeout(() => {
