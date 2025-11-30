@@ -74,11 +74,40 @@ export function NutritionList({ records, showGroupedByDate = false, onRecordChan
 
     return (
       <div className="space-y-4">
-        {groupedRecords.map((group, groupIndex) => (
+        {groupedRecords.map((group, groupIndex) => {
+          // 計算當日總攝取量
+          const dailyTotal = group.records.reduce(
+            (sum, rec) => ({
+              calories: sum.calories + rec.calories,
+              protein: sum.protein + rec.protein
+            }),
+            { calories: 0, protein: 0 }
+          )
+
+          return (
           <Card key={groupIndex}>
             <CardHeader>
               <CardTitle className="text-lg">{group.date}</CardTitle>
             </CardHeader>
+
+            {/* 當日營養總計 */}
+            <div className="px-6 pb-4">
+              <div className="flex gap-3">
+                <div className="flex-1 bg-orange-50 dark:bg-orange-950/30 rounded-xl p-4">
+                  <div className="text-xs text-orange-600 dark:text-orange-400 mb-1">熱量</div>
+                  <div className="font-semibold text-xl text-orange-700 dark:text-orange-300">
+                    {Math.round(dailyTotal.calories)} <span className="text-sm">大卡</span>
+                  </div>
+                </div>
+                <div className="flex-1 bg-blue-50 dark:bg-blue-950/30 rounded-xl p-4">
+                  <div className="text-xs text-blue-600 dark:text-blue-400 mb-1">蛋白質</div>
+                  <div className="font-semibold text-xl text-blue-700 dark:text-blue-300">
+                    {Math.round(dailyTotal.protein * 10) / 10} <span className="text-sm">g</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <CardContent className="space-y-3">
               {group.records.map((record) => (
                 <div
@@ -125,7 +154,8 @@ export function NutritionList({ records, showGroupedByDate = false, onRecordChan
               ))}
             </CardContent>
           </Card>
-        ))}
+          )
+        })}
 
         <EditNutritionDialog
           record={editRecord}
